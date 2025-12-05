@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Investasi & Backtest</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS untuk Membaca Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Chart.js untuk Grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- PDF LIBRARIES -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #fcfcfc;
+            color: #333;
+            font-size: 0.8125rem;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container-wrapper {
+            background-color: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border-radius: 12px;
+            border: 1px solid #eeeeee;
+            padding: 1.5rem;
+            margin-top: 6rem; 
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .container-wrapper {
+                margin-top: 4.5rem; 
+                padding: 1rem;
+                width: 96%;
+            }
+        }
+
+        .header-global {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 2.5rem; 
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 50;
+            color: #333333;
+            height: 60px;
+        }
+
+        .mobile-nav-link-custom {
+          font-size: 1.1rem;
+          line-height: 1.75rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            justify-content: flex-start; 
+        }
+
+        .label-wrapper {
+            min-height: 1.5rem;
+            display: flex;
+            align-items: flex-end; 
+            margin-bottom: 0.1rem;
+        }
+
+        .input-field {
+            border: 1px solid #e0e0e0;
+            background-color: #ffffff;
+            color: #333;
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.875rem;
+            width: 100%;
+            height: 38px;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            ring: 1px solid #3b82f6;
+        }
+
+        .file-upload-wrapper {
+            border: 2px dashed #e0e0e0;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 1rem;
+        }
+        .file-upload-wrapper.uploaded {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        .input-label {
+            color: #5a5a5a;
+            font-weight: 500;
+            font-size: 0.75rem;
+            line-height: 1.2;
+        }
+        
+        .button-green, .button-light {
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .button-green {
+            background-color: #222222;
+            color: white;
+        }
+        .button-light {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin-top: 0; 
+            min-width: 800px;
+            font-size: 0.75rem;
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+
+        .results-table th, .results-table td {
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #f3f4f6; 
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .results-table thead th {
+            background-color: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+        }
+
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background-color: #ffffff;
+            border-right: 2px solid #e5e7eb !important; 
+        }
+        
+        .row-label {
+            font-weight: 600;
+            color: #4b5563;
+            text-align: left;
+            background-color: #f9fafb; 
+        }
+
+        .year-header {
+            background-color: #1f2937 !important; 
+            color: #ffffff !important;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        
+        .net-profit-cell {
+            background-color: #ecfdf5 !important; 
+            color: #059669 !important; 
+            font-weight: 700;
+            border-left: 2px solid #10b981; 
+        }
+
+        .results-table tbody tr:hover td {
+            background-color: #fafafa;
+        }
+
+        .info-section {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            text-align: left;
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .download-button {
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+            margin-top: 1rem;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        
+        .pdf-button {
+            background-color: #dc2626; 
+            color: white;
+            margin-top: 0.5rem; 
+        }
+        
+        .logic-card {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.25rem;
+            height: 100%;
+        }
+        .logic-formula {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #d946ef; 
+            display: block;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Container untuk Chart */
+        .chart-container {
+            position: relative;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            height: 40vh;
+            min-height: 300px;
+            width: 100%;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        /* Update Tampilan Nilai Masa Depan */
+        .future-value-display {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column; /* Stack vertikal */
+            gap: 0.75rem; /* Jarak antar baris */
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        
+        .future-value-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .future-value-row span:last-child {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #222;
+        }
+
+        /* Helper Styles */
+        .text-xs { font-size: 0.75rem; }
+        .font-bold { font-weight: 700; }
+        .text-green-600 { color: #16a34a; }
+        .text-red-600 { color: #dc2626; }
+    </style>
+</head>
+<body>
+    <header class="header-global px-4 md:px-10">
+        <div class="flex items-center">
+            <a href="index.html" class="font-light text-l text-gray-800">Investasi</a>
+        </div>
+        <nav class="hidden md:flex items-center space-x-6 font-light text-sm">
+            <a href="index.html" class="hover:text-blue-600 transition-colors">Home</a>
+            <a href="about_new.html" class="hover:text-blue-600 transition-colors">About</a>
+            <a href="services.html" class="hover:text-blue-600 transition-colors">Services</a>
+            <a href="contact.html" class="hover:text-blue-600 transition-colors">Contact</a>
+            <a href="beranda.html" class="hover:text-blue-600 transition-colors">Beranda</a>
+            <a href="investasi.html" class="hover:text-blue-600 transition-colors font-medium text-blue-600">Investasi</a>
+            <a href="backtest.html" class="hover:text-blue-600 transition-colors ">Backtest</a>
+        </nav>
+        <div class="md:hidden">
+            <button id="hamburger-button" class="text-gray-700 focus:outline-none p-1">
+                <svg id="hamburger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <div id="mobileMenu" class="hidden fixed inset-0 bg-white/95 backdrop-blur-lg z-50 transition-opacity duration-300 ease-in-out">
+        <button id="closeMenuBtn" class="fixed top-4 right-4 z-50 text-black focus:outline-none p-2 bg-gray-100 rounded-full">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <div class="flex flex-col items-center justify-center h-full w-full p-6">
+            <nav class="flex flex-col items-center space-y-4">
+                <a href="index.html" class="mobile-nav-link-custom font-light text-black hover:text-blue-700">Home</a>
+                <a href="about_new.html" class="mobile-nav-link-custom font-light text-black hover:text-blue-700">About</a>
+                <a href="services.html" class="mobile-nav-link-custom font-light text-black hover:text-blue-700">Services</a>
+                <a href="contact.html" class="mobile-nav-link-custom font-light text-black hover:text-blue-700">Contact</a>
+                <a href="beranda.html" class="mobile-nav-link-custom font-light text-black hover:text-blue-700">Beranda</a>
+                <a href="investasi.html" class="mobile-nav-link-custom font-medium text-blue-600 hover:text-blue-700">Investasi</a>
+                <a href="backtest.html" class="mobile-nav-link-custom font-light text-black hover:text-blue-700">Backtest</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container-wrapper" id="calculatorContainer">
+        <h1 class="text-xl md:text-2xl font-light text-primary mb-4 text-center md:text-left text-gray-800">Kalkulator Investasi & Backtest</h1>
+
+        <div class="file-upload-wrapper py-4 px-2" id="dropZone">
+            <input type="file" id="csvFileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="hidden">
+            <label for="csvFileInput" class="cursor-pointer block">
+                <p class="text-sm font-medium text-gray-700">📂 Unggah Data Excel (.xlsx / .csv)</p>
+                <p class="text-[10px] text-gray-400 mt-1" id="fileStatusText">Format Wajib: Ada kolom 'No' & 'Status'.</p>
+            </label>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 items-start" id="inputSection">
+            <div class="input-group">
+                <div class="label-wrapper">
+                    <label for="investmentAmount" class="input-label">Modal Awal ($)</label>
+                </div>
+                <input type="number" id="investmentAmount" class="input-field" value="100000" placeholder="100000">
+            </div>
+            
+            <div class="input-group">
+                <div class="label-wrapper">
+                    <label for="pairSelect" class="input-label">Instrumen</label>
+                </div>
+                <select id="pairSelect" class="input-field cursor-pointer">
+                    <option value="Xauusd">XAUUSD</option>
+                    <option value="Nasdaq">Nasdaq</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <div class="label-wrapper">
+                    <label for="riskPerTradePercentage" class="input-label">Risk / Trade (%)</label>
+                </div>
+                <input type="number" id="riskPerTradePercentage" class="input-field" value="1" step="0.01" placeholder="1">
+            </div>
+            
+            <div class="input-group">
+                <div class="label-wrapper">
+                    <label for="monthlyReturn" class="input-label">Target Bln (%)</label>
+                </div>
+                <input type="number" id="monthlyReturn" class="input-field" value="0.5" step="0.01" placeholder="0.5">
+            </div>
+        </div>
+
+        <div class="flex flex-row gap-3 mb-6">
+            <button id="resetBtn" class="button-light flex-1 justify-center">Reset</button>
+            <button id="calculateBtn" class="button-green flex-1 justify-center">Hitung</button>
+        </div>
+
+        <div class="future-value-display">
+            <div class="future-value-row">
+                <span>Nilai Masa Depan:</span>
+                <span id="futureValue">0 USD</span>
+            </div>
+            <!-- Bagian Baru untuk Total Pertumbuhan -->
+            <div class="future-value-row" style="border-top: 1px solid #eee; padding-top: 0.5rem;">
+                <span style="font-size: 0.85rem; color: #555;">Total Pertumbuhan:</span>
+                <span id="totalGrowth" class="text-green-600">0.00%</span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-lg shadow-sm border border-gray-200 mb-6">
+            <table class="results-table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="sticky-col z-30" style="min-width: 80px;">Tahun</th>
+                        <th colspan="12" style="border-bottom: 2px solid #e5e7eb;">Bulan</th>
+                        <th rowspan="2" class="sticky right-0 z-20 bg-gray-50 border-l border-gray-200">Total</th>
+                    </tr>
+                    <tr>
+                        <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>Mei</th><th>Jun</th>
+                        <th>Jul</th><th>Agu</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <!-- Results akan muncul di sini -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Grafik Container -->
+        <div class="chart-container">
+            <canvas id="growthChart"></canvas>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <button id="downloadExcelBtn" class="download-button mt-0">Unduh Excel</button>
+            <button id="downloadPdfBtn" class="download-button pdf-button mt-0">Unduh PDF</button>
+        </div>
+    </div>
+
+    <!-- Info Section -->
+    <section class="info-section">
+        <h2 class="text-lg text-primary">Panduan Singkat</h2>
+        <ol class="list-decimal list-inside space-y-1 text-xs md:text-sm text-gray-600">
+            <li><strong>Auto Save:</strong> Data tersimpan otomatis di browser.</li>
+            <li><strong>Export:</strong> Tersedia format Excel (.csv) dan PDF lengkap (Tabel + Grafik).</li>
+        </ol>
+    </section>
+
+    <!-- Logic Section -->
+    <section class="info-section mt-4 bg-gray-50 border-t border-gray-200" id="logicSection">
+        <h2 class="text-lg text-primary mb-4">Bedah Logika: Dapur Perhitungan Sistem</h2>
+        <p class="text-sm text-gray-500 mb-6">Berikut adalah transparansi logika matematika yang digunakan:</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="logic-card">
+                <h3 class="text-sm text-gray-800 font-bold mb-2">1. Compounding (Bola Salju)</h3>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                    Sistem "Dynamic Compounding". Resiko per transaksi ($) selalu berubah mengikuti saldo terakhir.
+                </p>
+                <code class="logic-formula">Risk ($) = Saldo Saat Ini x % Risk</code>
+                <div class="mt-2 text-[10px] text-gray-500 bg-gray-100 p-2 rounded">
+                    <strong>Catatan:</strong> Asumsi Risk:Reward = 1:2.
+                </div>
+            </div>
+    
+            <div class="logic-card">
+                <h3 class="text-sm text-gray-800 font-bold mb-2">2. Kalkulasi Lot Otomatis</h3>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                    Lot adalah hasil matematika terbalik untuk menjaga resiko tetap konsisten dalam %.
+                </p>
+                <code class="logic-formula">Lot = Risk ($) / (Jarak SL (Pips) x Contract Size)</code>
+            </div>
+    
+            <div class="logic-card">
+                <h3 class="text-sm text-gray-800 font-bold mb-2">3. Pertumbuhan Persentase (%)</h3>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                    Tabel "Pertumbuhan" kini menghitung perkembangan dana secara riil dalam bentuk persentase tahunan dan bulanan.
+                </p>
+                <code class="logic-formula">Growth % = ((Saldo Akhir - Saldo Awal) / Saldo Awal) * 100</code>
+                <p class="text-xs text-gray-600 leading-relaxed mt-2">
+                    Menampilkan akumulasi profit dalam setahun (pada kolom Total) dan per bulan.
+                </p>
+            </div>
+
+            <div class="logic-card">
+                <h3 class="text-sm text-gray-800 font-bold mb-2">4. Alur Proses Data</h3>
+                <ul class="list-decimal list-inside text-xs text-gray-600 leading-relaxed space-y-1">
+                    <li>Simulasi ulang transaksi berdasarkan urutan waktu.</li>
+                    <li>Saldo dikalkulasi progresif (Compounding).</li>
+                    <li>Grafik Line Chart menampilkan visualisasi kurva ekuitas.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer class="w-full py-4 text-center text-gray-400 text-[10px] font-light bg-gray-50 border-t border-gray-200">
+        Leodra Sint | Think like a dealer, not like a player.
+    </footer>
+
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+        let myChart = null; // Variabel global untuk chart
+
+        // Format: Angka dulu baru USD (e.g. 5,000 USD)
+        function formatUSD(num) {
+            const formattedNum = new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 0, maximumFractionDigits: 0
+            }).format(num);
+            return `${formattedNum} USD`;
+        }
+
+        function formatK(num) {
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+        }
+
+        function formatLot(num) { return parseFloat(num).toFixed(2); }
+        function formatPercent(num) { return parseFloat(num).toFixed(2) + '%'; }
+
+        function exportToCsv(filename) {
+            const table = document.querySelector('.results-table');
+            let csv = [];
+            const rows = table.querySelectorAll("tr");
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length; j++) {
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").trim();
+                    data = data.replace(/,/g, ""); 
+                    row.push(data);
+                }
+                csv.push(row.join(","));        
+            }
+            const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+            const downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        async function exportToPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+            
+            doc.setFontSize(16);
+            doc.setTextColor(40, 40, 40);
+            doc.text("Laporan Simulasi Investasi & Backtest", 14, 20);
+            
+            const investAmount = document.getElementById('investmentAmount').value;
+            const pair = document.getElementById('pairSelect').options[document.getElementById('pairSelect').selectedIndex].text;
+            const risk = document.getElementById('riskPerTradePercentage').value;
+            const monthlyReturn = document.getElementById('monthlyReturn').value;
+            const futureVal = document.getElementById('futureValue').innerText;
+            const totalGrowthVal = document.getElementById('totalGrowth').innerText;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            
+            // Format suffix USD
+            const formattedInvestAmount = `${new Intl.NumberFormat('en-US').format(investAmount)} USD`;
+
+            let startY = 30;
+            doc.text(`Tanggal Laporan: ${new Date().toLocaleDateString('id-ID')}`, 14, startY);
+            doc.text(`Modal Awal: ${formattedInvestAmount}`, 14, startY + 6);
+            doc.text(`Instrumen: ${pair}`, 14, startY + 12);
+            doc.text(`Risiko per Trade: ${risk}%`, 80, startY + 6);
+            doc.text(`Target Return Bln: ${monthlyReturn}%`, 80, startY + 12);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0, 100, 0); 
+            doc.setFont("helvetica", "bold");
+            doc.text(`Hasil Nilai Masa Depan: ${futureVal}`, 14, startY + 22);
+            doc.text(`Total Pertumbuhan: ${totalGrowthVal}`, 120, startY + 22);
+            
+            // Generate Table
+            doc.autoTable({
+                html: '#resultsTable', 
+                startY: startY + 30,   
+                theme: 'grid',        
+                headStyles: {
+                    fillColor: [31, 41, 55], 
+                    textColor: [255, 255, 255],
+                    fontSize: 8,
+                    halign: 'center'
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    textColor: [50, 50, 50]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', fillColor: [249, 250, 251] }, 
+                    13: { fontStyle: 'bold', fillColor: [240, 253, 244] } 
+                },
+                didParseCell: function(data) {
+                    if (data.section === 'body' && data.column.index > 0 && data.column.index <= 13) {
+                        const text = data.cell.raw.innerText || "";
+                        if (text.includes('+')) {
+                            data.cell.styles.textColor = [22, 163, 74]; 
+                            data.cell.styles.fontStyle = 'bold';
+                        } else if (text.startsWith('-') && text !== '-') {
+                            data.cell.styles.textColor = [220, 38, 38]; 
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
+                }
+            });
+
+            // Add Chart to PDF
+            const chartCanvas = document.getElementById('growthChart');
+            if (chartCanvas) {
+                // Konversi chart ke image
+                const chartImg = chartCanvas.toDataURL('image/png', 1.0);
+                const finalY = doc.lastAutoTable.finalY + 10; // Posisi di bawah tabel
+                
+                // Cek jika halaman tidak cukup
+                if (finalY + 80 > 200) {
+                    doc.addPage();
+                    doc.text("Grafik Perkembangan Dana", 14, 20);
+                    doc.addImage(chartImg, 'PNG', 14, 30, 270, 100); // Lebar, Tinggi disesuaikan
+                } else {
+                    doc.text("Grafik Perkembangan Dana", 14, finalY);
+                    doc.addImage(chartImg, 'PNG', 14, finalY + 5, 270, 90);
+                }
+            }
+
+            doc.save(`Laporan_Investasi_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+
+        // Render Function untuk ChartJS
+        function renderChart(labels, data) {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            
+            // Buat Gradient Hijau Transparan
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(34, 197, 94, 0.2)'); // Atas
+            gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)'); // Bawah
+
+            if (myChart) {
+                myChart.destroy(); // Hapus chart lama agar tidak numpuk
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pertumbuhan Saldo (USD)',
+                        data: data,
+                        borderColor: '#059669', // Emerald 600 - Hijau Profesional
+                        backgroundColor: gradient,
+                        borderWidth: 1.5,
+                        pointRadius: 2, // Titik data lebih kecil
+                        pointHoverRadius: 4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#059669',
+                        pointBorderWidth: 1,
+                        fill: true,
+                        tension: 0.2 // Garis sedikit lebih tegas (kurang melengkung)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { 
+                            display: true, 
+                            position: 'top',
+                            labels: {
+                                font: { size: 10, family: 'Inter' }, // Font Legenda Kecil
+                                boxWidth: 8,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#1f2937',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            titleFont: { size: 10, family: 'Inter', weight: '600' }, // Font Tooltip Kecil
+                            bodyFont: { size: 10, family: 'Inter' },
+                            padding: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits:0 }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { 
+                                color: '#f0f0f0', // Grid Horizontal Halus
+                                drawBorder: false 
+                            },
+                            ticks: {
+                                font: { size: 9, family: 'Inter' }, // Font Y-Axis Kecil
+                                color: '#6b7280'
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { 
+                                display: true, // Grid Vertikal (Bulan) ditampilkan
+                                color: '#f0f0f0',
+                                drawBorder: false 
+                            },
+                            ticks: {
+                                font: { size: 9, family: 'Inter' }, // Font X-Axis Kecil
+                                color: '#6b7280',
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const investmentAmountInput = document.getElementById('investmentAmount');
+            const pairSelect = document.getElementById('pairSelect');
+            const riskPerTradePercentageInput = document.getElementById('riskPerTradePercentage');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const futureValueSpan = document.getElementById('futureValue');
+            const totalGrowthSpan = document.getElementById('totalGrowth'); // Element Baru
+            const resultsTableBody = document.getElementById('resultsTableBody');
+            const csvFileInput = document.getElementById('csvFileInput');
+            const fileStatusText = document.getElementById('fileStatusText');
+            const dropZone = document.getElementById('dropZone');
+            const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+            const monthlyReturnInput = document.getElementById('monthlyReturn');
+            
+            let uploadedCSVData = null; 
+            let lastFileName = "";
+
+            const STORAGE_KEY = "investCalcData_v3"; 
+
+            function loadFromStorage() {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    if(data.investment) investmentAmountInput.value = data.investment;
+                    if(data.pair) pairSelect.value = data.pair;
+                    if(data.risk) riskPerTradePercentageInput.value = data.risk;
+                    if(data.monthlyReturn) monthlyReturnInput.value = data.monthlyReturn;
+                    
+                    if(data.fileData && data.fileData.length > 0) {
+                        uploadedCSVData = data.fileData;
+                        lastFileName = data.fileName || "File Tersimpan";
+                        
+                        fileStatusText.textContent = `Data: ${lastFileName}`;
+                        fileStatusText.className = "text-[10px] text-blue-600 font-semibold mt-1";
+                        dropZone.classList.add('uploaded');
+                        
+                        setTimeout(calculateFromCSV, 500);
+                    }
+                }
+            }
+
+            function saveToStorage() {
+                const dataToSave = {
+                    investment: investmentAmountInput.value,
+                    pair: pairSelect.value,
+                    risk: riskPerTradePercentageInput.value,
+                    monthlyReturn: monthlyReturnInput.value,
+                    fileData: uploadedCSVData,
+                    fileName: lastFileName
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            }
+
+            const inputs = [investmentAmountInput, pairSelect, riskPerTradePercentageInput, monthlyReturnInput];
+            inputs.forEach(input => {
+                input.addEventListener('input', saveToStorage);
+                input.addEventListener('change', saveToStorage);
+            });
+
+            csvFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    lastFileName = file.name;
+                    fileStatusText.textContent = `File: ${file.name}`;
+                    fileStatusText.className = "text-[10px] text-green-700 font-semibold mt-1";
+                    dropZone.classList.add('uploaded');
+                    
+                    const reader = new FileReader();
+                    const fileName = file.name.toLowerCase();
+                    if (fileName.endsWith('.csv')) {
+                        reader.onload = function(event) {
+                            const content = event.target.result;
+                            uploadedCSVData = parseCSVStrict(content);
+                            saveToStorage(); 
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        reader.onload = function(event) {
+                            const data = new Uint8Array(event.target.result);
+                            const workbook = XLSX.read(data, {type: 'array'});
+                            const firstSheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[firstSheetName];
+                            const csvOutput = XLSX.utils.sheet_to_csv(worksheet, { FS: "," });
+                            uploadedCSVData = parseCSVStrict(csvOutput);
+                            saveToStorage();
+                        };
+                        reader.readAsArrayBuffer(file);
+                    }
+                }
+            });
+
+            function parseCSVStrict(csvText) {
+                const lines = csvText.split(/\r\n|\n/);
+                const result = [];
+                let headers = [];
+                let startRow = 0;
+                
+                for(let i=0; i<lines.length; i++) {
+                    const line = lines[i].trim();
+                    if(line.toLowerCase().includes('no') && line.toLowerCase().includes('status')) {
+                        headers = line.split(',').map(h => h.trim());
+                        startRow = i + 1;
+                        break;
+                    }
+                }
+
+                if(headers.length === 0) {
+                    const firstLine = lines[0].split(',').map(h => h.trim());
+                    if(firstLine.includes('No') || firstLine.includes('Status')) {
+                        headers = firstLine;
+                        startRow = 1;
+                    } else {
+                        alert("Format File Tidak Dikenali. Pastikan ada kolom 'No' dan 'Status'.");
+                        return [];
+                    }
+                }
+
+                for(let i = startRow; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if(!line || line.replace(/,/g, '').trim() === '' || line.toUpperCase().startsWith('STATISTIK')) {
+                        break; 
+                    }
+                    const currentline = line.split(',');
+                    const noValue = currentline[0].trim();
+                    if(noValue && isNaN(parseInt(noValue))) { break; }
+
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        let val = currentline[index] ? currentline[index].trim() : '';
+                        obj[header] = val;
+                    });
+                    
+                    if(obj['Status'] && obj['Waktu Close']) {
+                        result.push(obj);
+                    }
+                }
+                return result.sort((a, b) => new Date(a['Waktu Close']) - new Date(b['Waktu Close']));
+            }
+
+            calculateBtn.addEventListener('click', () => {
+                if (!uploadedCSVData || uploadedCSVData.length === 0) {
+                    alert("Wajib mengunggah file Excel/CSV terlebih dahulu.");
+                    resultsTableBody.innerHTML = `<tr><td colspan="14" class="p-8 text-center text-red-500 font-medium bg-red-50 rounded">Data Kosong. Silakan unggah file.</td></tr>`;
+                    futureValueSpan.textContent = "0 USD";
+                    totalGrowthSpan.textContent = "0.00%";
+                    totalGrowthSpan.className = "text-gray-500 font-bold";
+                    if(myChart) myChart.destroy(); // Clear chart if no data
+                    return;
+                }
+                calculateFromCSV();
+                saveToStorage(); 
+            });
+
+            function calculateFromCSV() {
+                resultsTableBody.innerHTML = '';
+                let currentBalance = parseFloat(investmentAmountInput.value);
+                const initialBalance = currentBalance;
+                const riskPercent = parseFloat(riskPerTradePercentageInput.value);
+                const selectedPair = pairSelect.value;
+                let pipValue = 10; 
+                if (selectedPair === 'Nasdaq') pipValue = 0.1;
+
+                if (isNaN(currentBalance) || isNaN(riskPercent)) {
+                    alert("Isi Modal dan Risiko");
+                    return;
+                }
+
+                const monthlyData = {}; 
+
+                uploadedCSVData.forEach(trade => {
+                    const closeTime = trade['Waktu Close']; 
+                    const dateObj = new Date(closeTime); 
+                    if (isNaN(dateObj.getTime())) return;
+
+                    const year = dateObj.getFullYear();
+                    const month = dateObj.getMonth(); 
+                    const key = `${year}-${month}`;
+
+                    if (!monthlyData[key]) {
+                        monthlyData[key] = {
+                            year: year, month: month, 
+                            startBalance: currentBalance, // Saldo awal bulan ini
+                            endBalance: 0,
+                            lotSizes: [], wins: 0, losses: 0, hasData: true
+                        };
+                    }
+
+                    const riskAmount = currentBalance * (riskPercent / 100);
+                    const slPips = parseFloat(trade['SL Pips']);
+                    let calculatedLot = 0.01;
+                    
+                    if (!isNaN(slPips) && slPips > 0) {
+                        calculatedLot = riskAmount / (slPips * pipValue);
+                    }
+                    if (calculatedLot < 0.01) calculatedLot = 0.01;
+
+                    let profitLoss = 0;
+                    const status = trade['Status'] ? trade['Status'].toUpperCase() : ''; 
+
+                    if (status.includes('WIN')) {
+                        profitLoss = riskAmount * 2;
+                        monthlyData[key].wins++;
+                    } else if (status.includes('LOSS')) {
+                        profitLoss = -riskAmount;
+                        monthlyData[key].losses++;
+                    }
+
+                    currentBalance += profitLoss;
+                    monthlyData[key].endBalance = currentBalance; // Update saldo berjalan
+                    monthlyData[key].lotSizes.push(calculatedLot);
+                });
+
+                const uniqueYears = [...new Set(Object.values(monthlyData).map(d => d.year))].sort();
+
+                if (uniqueYears.length === 0) {
+                    resultsTableBody.innerHTML = `<tr><td colspan="14" class="p-8 text-center text-gray-500">Data valid tidak ditemukan.</td></tr>`;
+                    return;
+                }
+
+                // Persiapan Data Chart
+                let chartLabels = [];
+                let chartDataPoints = [];
+                // Add initial point
+                chartLabels.push('Start');
+                chartDataPoints.push(initialBalance);
+
+                uniqueYears.forEach(year => {
+                    const yearRow = document.createElement('tr');
+                    yearRow.innerHTML = `<th class="sticky-col year-header z-20">${year}</th>
+                                         <td colspan="13" class="text-left year-header pl-4">
+                                            <span class="opacity-90 font-light">Result - </span> ${selectedPair} 
+                                         </td>`;
+                    resultsTableBody.appendChild(yearRow);
+
+                    const usdRow = document.createElement('tr');
+                    usdRow.innerHTML = `<th class="sticky-col row-label text-xs">Saldo ($)</th>`;
+                    const lotRow = document.createElement('tr');
+                    lotRow.innerHTML = `<th class="sticky-col row-label text-xs">Lot</th>`;
+                    const growthRow = document.createElement('tr');
+                    growthRow.innerHTML = `<th class="sticky-col row-label text-xs">Pertumbuhan (%)</th>`;
+
+                    let yearlyFinalBalance = 0;
+                    
+                    // Variabel untuk Annual Growth
+                    let yearStartBalance = 0;
+                    let yearEndBalance = 0;
+                    let isFirstMonthFound = false;
+
+                    // First Pass to find Year Start and End Balance
+                    for (let m = 0; m < 12; m++) {
+                        const key = `${year}-${m}`;
+                        const monthData = monthlyData[key];
+                        if (monthData && monthData.hasData) {
+                            if (!isFirstMonthFound) {
+                                yearStartBalance = monthData.startBalance;
+                                isFirstMonthFound = true;
+                            }
+                            yearEndBalance = monthData.endBalance;
+                        }
+                    }
+
+                    for (let m = 0; m < 12; m++) {
+                        const key = `${year}-${m}`;
+                        const monthData = monthlyData[key];
+                        
+                        if (monthData && monthData.hasData) {
+                            const minLot = Math.min(...monthData.lotSizes).toFixed(2);
+                            const maxLot = Math.max(...monthData.lotSizes).toFixed(2);
+                            
+                            // Hitung % Pertumbuhan bulan ini
+                            const startBal = monthData.startBalance;
+                            const endBal = monthData.endBalance;
+                            let growthPct = 0;
+                            if (startBal > 0) {
+                                growthPct = ((endBal - startBal) / startBal) * 100;
+                            }
+                            
+                            const tradeColor = growthPct >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
+                            
+                            usdRow.innerHTML += `<td>${formatK(monthData.endBalance)}</td>`;
+                            lotRow.innerHTML += `<td class="text-xs">${minLot}-${maxLot}</td>`;
+                            
+                            const sign = growthPct > 0 ? '+' : '';
+                            growthRow.innerHTML += `<td class="${tradeColor}">${sign}${growthPct.toFixed(2)}%</td>`;
+                            
+                            yearlyFinalBalance = monthData.endBalance;
+
+                            // Push Data Chart
+                            const monthName = new Date(year, m).toLocaleString('default', { month: 'short' });
+                            chartLabels.push(`${monthName} ${year}`);
+                            chartDataPoints.push(monthData.endBalance);
+
+                        } else {
+                            usdRow.innerHTML += `<td class="text-gray-300">-</td>`;
+                            lotRow.innerHTML += `<td class="text-gray-300">-</td>`;
+                            growthRow.innerHTML += `<td class="text-gray-300">-</td>`;
+                        }
+                    }
+
+                    // Hitung Annual Growth
+                    let annualGrowth = 0;
+                    if (yearStartBalance > 0) {
+                        annualGrowth = ((yearEndBalance - yearStartBalance) / yearStartBalance) * 100;
+                    }
+                    const annualSign = annualGrowth > 0 ? '+' : '';
+                    const annualColor = annualGrowth >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
+
+                    usdRow.innerHTML += `<td class="net-profit-cell sticky right-0 z-10 border-l border-green-200">${formatUSD(yearlyFinalBalance)}</td>`;
+                    lotRow.innerHTML += `<td class="bg-gray-50 sticky right-0 z-10"></td>`;
+                    growthRow.innerHTML += `<td class="bg-gray-50 sticky right-0 z-10 border-l border-green-200 ${annualColor}">${annualSign}${annualGrowth.toFixed(2)}%</td>`;
+
+                    resultsTableBody.appendChild(usdRow);
+                    resultsTableBody.appendChild(lotRow);
+                    resultsTableBody.appendChild(growthRow);
+                });
+
+                futureValueSpan.textContent = formatUSD(currentBalance);
+                
+                // HITUNG TOTAL PERTUMBUHAN (ALL TIME)
+                let totalGrowthPct = 0;
+                if (initialBalance > 0) {
+                    totalGrowthPct = ((currentBalance - initialBalance) / initialBalance) * 100;
+                }
+                const totalGrowthSign = totalGrowthPct > 0 ? '+' : '';
+                
+                totalGrowthSpan.textContent = `${totalGrowthSign}${totalGrowthPct.toFixed(2)}%`;
+                totalGrowthSpan.className = totalGrowthPct >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
+
+                // Render Chart
+                renderChart(chartLabels, chartDataPoints);
+            }
+
+            resetBtn.addEventListener('click', () => {
+                localStorage.removeItem(STORAGE_KEY);
+                investmentAmountInput.value = '100000';
+                pairSelect.value = 'Xauusd';
+                riskPerTradePercentageInput.value = '1';
+                futureValueSpan.textContent = "0 USD";
+                totalGrowthSpan.textContent = "0.00%";
+                totalGrowthSpan.className = "text-green-600 font-bold";
+                resultsTableBody.innerHTML = ''; 
+                csvFileInput.value = '';
+                uploadedCSVData = null;
+                lastFileName = "";
+                fileStatusText.textContent = "Format Wajib: Ada kolom 'No' & 'Status'.";
+                fileStatusText.className = "text-[10px] text-gray-500 mt-1";
+                dropZone.classList.remove('uploaded');
+                if(myChart) myChart.destroy();
+            });
+
+            const hamburgerButton = document.getElementById('hamburger-button');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const closeMenuBtn = document.getElementById('closeMenuBtn');
+            function toggleMenu() {
+                if (mobileMenu) mobileMenu.classList.toggle('hidden');
+            }
+            if (hamburgerButton) hamburgerButton.addEventListener('click', toggleMenu);
+            if (closeMenuBtn) closeMenuBtn.addEventListener('click', toggleMenu);
+
+            downloadExcelBtn.addEventListener('click', () => {
+                exportToCsv(`Proyeksi_Investasi_${new Date().toISOString().slice(0, 10)}.csv`);
+            });
+
+            downloadPdfBtn.addEventListener('click', () => {
+                const hasRows = resultsTableBody.querySelectorAll('tr').length > 0;
+                if (!hasRows) {
+                    alert("Belum ada data.");
+                    return;
+                }
+                exportToPdf();
+            });
+
+            loadFromStorage(); 
+        });
+    </script>
+</body>
+</html>

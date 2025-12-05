@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEODRA - The Dealer's Game</title>
+    <!-- Tailwind CSS CDN for utility-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter for consistent typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS for font-family and responsive font sizes using clamp */
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden; /* Prevent horizontal scroll on smaller screens */
+        }
+
+        /* Responsive font sizes using clamp for main titles - Adjusted for better readability */
+        .text-h1-responsive {
+            font-size: clamp(2rem, 6vw, 2.8rem); /* Larger for impact */
+        }
+        .text-h2-responsive {
+            font-size: clamp(1.2rem, 3.5vw, 1.8rem); /* Slightly larger */
+        }
+        .text-h3-responsive {
+            font-size: clamp(1rem, 3vw, 2.2rem); /* Slightly larger */
+        }
+        .text-h4-responsive {
+            font-size: clamp(0.9rem, 2vw, 1.2rem); /* Slightly larger */
+        }
+        .text-p-responsive {
+            font-size: clamp(0.8rem, 1.6vw, 1rem); /* Slightly larger for body text */
+        }
+
+        /* Hamburger menu bar animation */
+        .menu-icon .bar {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .menu-icon.open .bar:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+        .menu-icon.open .bar:nth-child(2) {
+            opacity: 0;
+        }
+        .menu-icon.open .bar:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        /* Mobile navigation overlay */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* DIHAPUS: Latar belakang hitam pekat dihilangkan. 
+               Gaya ini akan diterapkan melalui kelas Tailwind di elemen HTML. */
+            /* background: rgba(0, 0, 0, 0.95); */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .mobile-nav-overlay.open {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-overlay ul {
+            list-style: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        .mobile-nav-overlay ul li {
+            margin: 16px 0; /* Adjusted margin for better spacing */
+        }
+
+        .mobile-nav-overlay ul li a {
+            /* PERUBAHAN: Diubah dari 'white' ke '#000' (hitam) agar terbaca di latar belakang putih. */
+            color: #000;
+            font-size: 1.6rem; /* Adjusted font size for mobile menu links */
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Style for the search input */
+        .search-input {
+            width: 140px; /* Slightly wider for better usability */
+            padding: 6px 10px; /* Increased padding */
+            border-radius: 6px; /* More rounded corners */
+            border: 1px solid #ccc;
+            font-size: 0.875rem; /* text-sm */
+            color: #333;
+            transition: width 0.3s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background-color: #f8f8f8; /* Lighter background for better contrast */
+        }
+
+        .search-input:focus {
+            width: 200px; /* Expand on focus */
+            outline: none;
+            border-color: #555; /* Darker border on focus */
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2); /* Subtle shadow on focus */
+        }
+
+        .search-button {
+            background-color: #eee; /* Diubah dari #333 (hitam) ke abu-abu muda */
+            color: #333; /* Diubah dari white ke #333 (hitam/gelap) */
+            padding: 6px 12px; /* Increased padding */
+            border-radius: 6px; /* More rounded corners */
+            font-size: 0.875rem; /* text-sm */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+
+        .search-button:hover {
+            background-color: #ddd; /* Diubah dari #555 ke abu-abu lebih gelap */
+            transform: translateY(-1px); /* Slight lift on hover */
+        }
+        .search-button:active {
+            transform: translateY(0); /* Press effect */
+        }
+
+        /* Message Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem; /* Increased padding */
+            border-radius: 0.75rem; /* More rounded corners */
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+            max-width: 90%;
+            width: 500px; /* Slightly wider modal */
+            position: relative;
+            transform: translateY(-30px); /* More pronounced initial transform */
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+
+        /* ===== CSS BARU UNTUK AUTO SCROLL ===== */
+        @keyframes scroll-left {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            /* Bergerak ke kiri sejauh 50% dari total lebar (karena konten diduplikasi) */
+            transform: translateX(-50%); 
+          }
+        }
+
+        .animate-scroll {
+          display: inline-block; /* Membuat wrapper bisa dianimasikan */
+          animation: scroll-left 30s linear infinite; /* Durasi 30 detik, linear, berulang */
+          white-space: nowrap; /* Mencegah teks turun baris */
+        }
+        
+        .scroll-item {
+          display: inline-block;
+          padding: 0 1.5rem; /* py-0 px-6 */
+          /* PERUBAHAN: Ukuran font default (mobile) diperkecil */
+          font-size: 1rem; /* text-base, sebelumnya 1.125rem */
+          font-weight: 500; /* medium */
+          color: #000; /* Teks hitam */
+        }
+
+        /* TAMBAHAN: Mengembalikan ukuran font di desktop (md) ke ukuran semula */
+        @media (min-width: 768px) {
+          .scroll-item {
+            font-size: 1.125rem; /* text-lg (ukuran asli) */
+          }
+        }
+        /* ===== AKHIR DARI CSS BARU ===== */
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="messageModalTitle">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="messageModalTitle" class="text-h3-responsive font-semibold text-gray-800">Pesan</h3>
+                <button onclick="closeMessageModal()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold leading-none" aria-label="Tutup pesan">&times;</button>
+            </div>
+            <div id="messageModalContent" class="text-p-responsive text-center text-gray-700 space-y-3 mb-8">
+                <!-- Message will be inserted here by JavaScript -->
+            </div>
+            <div class="flex justify-center">
+                <button onclick="closeMessageModal()" class="btn-primary px-10">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Overlay (Hidden by default) -->
+    <!-- PERUBAHAN: 
+        1. Menambahkan 'bg-white/80 backdrop-blur-lg' agar serasi dengan gaya header.
+    -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay md:hidden bg-white/80 backdrop-blur-lg" role="navigation" aria-label="Menu Mobile">
+        <!-- PERUBAHAN: 
+            2. Mengubah warna tombol '×' dari 'text-white' menjadi 'text-black'.
+        -->
+        <button class="absolute top-4 right-4 cursor-pointer text-black text-3xl" onclick="toggleMobileMenu()" aria-label="Tutup menu mobile">
+            &times;
+        </button>
+        <div class="flex items-center mb-6">
+            <input type="text" id="mobile-search-input" placeholder="Cari halaman..." class="search-input mr-3" aria-label="Cari halaman">
+            <button onclick="performSearch('mobile-search-input')" class="search-button" aria-label="Tombol Cari">Cari</button>
+        </div>
+        <ul>
+            <!-- PERUBAHAN: 
+                3. Menghapus 'text-white' dan mengubah 'hover:text-gray-300' menjadi 'hover:text-gray-600' 
+                   agar link menu terlihat dan memiliki warna hover yang sesuai.
+            -->
+            <li><a href="index.html" class="hover:text-gray-600 transition-colors duration-200" onclick="toggleMobileMenu()">Home</a></li>
+            <li><a href="about_new.html" class="hover:text-gray-600 transition-colors duration-200" onclick="toggleMobileMenu()">About</a></li>
+            <li><a href="services.html" class="hover:text-gray-600 transition-colors duration-200" onclick="toggleMobileMenu()">Services</a></li>
+            <li><a href="contact.html" class="hover:text-gray-600 transition-colors duration-200" onclick="toggleMobileMenu()">Contact</a></li>
+        </ul>
+    </div>
+
+    <!-- Header Section -->
+    <!-- PERUBAHAN: Latar belakang diubah ke putih transparan + blur, teks diubah ke hitam -->
+    <header class="bg-white/80 backdrop-blur-lg h-16 flex items-center sticky top-0 z-50 w-full shadow-md border-b border-gray-200/50">
+        <div class="container mx-auto flex justify-end md:justify-between items-center px-4 sm:px-6 lg:px-8 w-full relative">
+            <div class="absolute left-1/2 -translate-x-1/2 md:static md:transform-none text-black text-2xl font-thin" style="font-family: 'Century Schoolbook', serif;">LEODRA</div>
+            <!-- Hamburger Menu Icon for Mobile -->
+            <button class="md:hidden menu-icon w-8 h-8 flex flex-col justify-around cursor-pointer p-1 rounded-sm transition-all duration-300 ease-in-out" onclick="toggleMobileMenu()" aria-label="Buka menu mobile">
+                <div class="bar w-full h-0.5 bg-black rounded-full"></div>
+                <div class="bar w-full h-0.5 bg-black rounded-full"></div>
+                <div class="bar w-full h-0.5 bg-black rounded-full"></div>
+            </button>
+            <!-- Desktop Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-6" aria-label="Menu Utama">
+                <div class="flex items-center space-x-3">
+                    <input type="text" id="desktop-search-input" placeholder="Cari halaman..." class="search-input" aria-label="Cari halaman">
+                    <button onclick="performSearch('desktop-search-input')" class="search-button" aria-label="Tombol Cari">Cari</button>
+                </div>
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="text-black text-sm font-normal hover:text-gray-600 transition-colors duration-200">Home</a></li>
+                    <li><a href="about_new.html" class="text-black text-sm font-normal hover:text-gray-600 transition-colors duration-200">About</a></li>
+                    <li><a href="services.html" class="text-black text-sm font-normal hover:text-gray-600 transition-colors duration-200">Services</a></li>
+                    <li><a href="contact.html" class="text-black text-sm font-normal hover:text-gray-600 transition-colors duration-200">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative bg-white py-8 md:py-16 overflow-hidden flex-grow flex flex-col justify-center items-center scroll-animate">
+        <div class="container mx-auto flex flex-col-reverse md:flex-row items-center justify-center md:justify-between px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <!-- Hero Text Content -->
+            <div class="w-full md:w-1/2 lg:w-2/5 text-center md:text-left mt-6 md:mt-0">
+                <h1 class="text-black text-h1-responsive font-extralight leading-tight mb-2">The Dealer's Game.</h1>
+                <p class="text-black text-p-responsive font-extralight mb-6">Fucking Money - MIT.</p>
+            </div>
+            <!-- Hero Image -->
+            <div class="w-full md:w-1/2 lg:w-3/5 flex justify-center md:justify-end">
+                <img class="w-full max-w-[20rem] md:max-w-[26rem] lg:max-w-[30rem] h-auto rounded-lg shadow-lg"
+                     src="https://i.pinimg.com/736x/82/ef/b7/82efb7add661eb1c767b09a3b7104fe9.jpg"
+                     alt="Man with octopus ring and playing cards"
+                     loading="lazy"
+                     onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/82/ef/b7/82efb7add661eb1c767b09a3b7104fe9.jpg">
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== BAGIAN AUTO SCROLL CHARACTER DIMULAI (PINDAH KE SINI) ===== -->
+    <section class="py-10 md:py-16 w-full bg-white scroll-animate">
+        <!-- PERUBAHAN: Container sekarang HANYA membungkus judul agar tetap di tengah -->
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <!-- Judul (FONT DIPERBESAR) -->
+            <h3 class="text-black text-h3-responsive font-extralight leading-snug mb-8 text-center"> <!-- DIUBAH: dari text-h4-responsive -->
+                Character
+            </h3>
+        </div> <!-- Penutup container dipindahkan ke sini -->
+            
+        <!-- Wrapper Auto Scroll (SEKARANG DI LUAR CONTAINER agar full-width) -->
+        <div class="w-full overflow-hidden relative">
+            <!-- Efek Fade Kiri (DIHAPUS) -->
+            <!-- Efek Fade Kanan (DIHAPUS) -->
+            
+            <!-- Trek yang Bergerak (isi diduplikasi untuk loop mulus) -->
+                <div class="animate-scroll">
+                    <!-- Grup Item 1 -->
+                    <span class="scroll-item">Disiplin</span>
+                    <span class="scroll-item">Kontrol Emosi</span>
+                    <span class="scroll-item">Analisis Tajam</span>
+                    <span class="scroll-item">Manajemen Risiko</span>
+                    <span class="scroll-item">Sabar</span>
+                    <span class="scroll-item">Kalkulatif</span>
+                    <span class="scroll-item">Tegas</span>
+                    <span class="scroll-item">Strategis</span>
+                    <span class="scroll-item">Adaptif</span>
+                    <span class="scroll-item">Negosiasi</span>
+
+                    <!-- Grup Item 2 (Duplikasi dari Grup 1) -->
+                    <span class="scroll-item">Disiplin</span>
+                    <span class="scroll-item">Kontrol Emosi</span>
+                    <span class="scroll-item">Analisis Tajam</span>
+                    <span class="scroll-item">Manajemen Risiko</span>
+                    <span class="scroll-item">Sabar</span>
+                    <span class="scroll-item">Kalkulatif</span>
+                    <span class="scroll-item">Tegas</span>
+                    <span class="scroll-item">Strategis</span>
+                    <span class="scroll-item">Adaptif</span>
+                    <span class="scroll-item">Negosiasi</span>
+                </div>
+            </div>
+        <!-- </div> penutup container yang lama dihapus dari sini -->
+    </section>
+    <!-- ===== BAGIAN AUTO SCROLL CHARACTER SELESAI ===== -->
+
+    <!-- Risk Management Banner (SEKARANG DI BAWAH AUTO SCROLL) -->
+    <section class="bg-gray-100 py-6 md:py-10 mt-6 md:mt-10 rounded-md shadow-inner w-full scroll-animate">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <h2 class="text-black text-h4-responsive font-light text-center">Calculating the Calmness of Risk Management</h2>
+        </div>
+    </section>
+
+    <!-- ===== BAGIAN AUTO SCROLL CHARACTER (LOKASI LAMA DIHAPUS DARI SINI) ===== -->
+
+    <!-- JPMorgan Chase Section -->
+    <section class="py-10 md:py-16 w-full scroll-animate">
+        <div class="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-6 md:gap-10 px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <!-- Text Content -->
+            <div class="w-full md:w-1/2 lg:w-2/5 text-center md:text-left">
+                <h3 class="text-black text-h3-responsive font-extralight leading-snug mb-3">Only big banks know where the market is going, we small traders just have to follow or die if we fight.</h3>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed">JPMorgan Chase & Co. adalah sebuah perusahaan induk jasa keuangan dan bank investasi multinasional asal Amerika yang berkantor pusat di New York City. Mereka adalah salah satu dari "empat besar" bank di Amerika Serikat dan merupakan salah satu bank terbesar di dunia berdasarkan kapitalisasi pasar. JPMorgan Chase menyediakan berbagai layanan keuangan, termasuk perbankan investasi, manajemen aset, perbankan komersial, dan perbankan ritel.</p>
+            </div>
+            <!-- Image -->
+            <div class="w-full md:w-1/2 lg:w-3/5 flex justify-center md:justify-end">
+                <img class="w-full max-w-[20rem] md:max-w-[26rem] lg:max-w-[30rem] h-auto rounded-lg shadow-lg"
+                     src="https://images.pexels.com/photos/2350541/pexels-photo-2350541.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                     alt="JPMorgan Chase building facade"
+                     loading="lazy"
+                     onerror="this.onerror=null;this.src='https://placehold.co/1260x750/cccccc/333333?text=Image+Not+Found';">
+            </div>
+        </div>
+    </section>
+
+    <!-- Caesars Palace Section -->
+    <section class="py-10 md:py-16 bg-gray-50 w-full scroll-animate">
+        <div class="container mx-auto flex flex-col md:flex-row-reverse items-center justify-center md:justify-between gap-6 md:gap-10 px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <!-- Text Content -->
+            <div class="w-full md:w-1/2 lg:w-2/5 text-center md:text-right">
+                <h3 class="text-black text-h3-responsive font-extralight leading-snug mb-3">No bookie wants you to win, so cheat the system because it was designed to cheat from the start.</h3>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed">Caesars Palace adalah sebuah resor kasino mewah yang terkenal di Las Vegas Strip, terkenal dengan arsitektur bergaya Romawi klasik, hiburan kelas dunia, dan berbagai fasilitas permainan dan perbelanjaan. Resor ini menawarkan pengalaman perjudian yang lengkap, mulai dari berbagai pilihan permainan meja dan slot, hingga arena pacuan kuda dan sportsbook yang besar. Selain itu, Caesars Palace juga memiliki The Forum Shops, sebuah destinasi belanja mewah dengan berbagai toko, restoran, dan tempat hiburan.</p>
+            </div>
+            <!-- Image -->
+            <div class="w-full md:w-1/2 lg:w-3/5 flex justify-center md:justify-start">
+                <img class="w-full max-w-[20rem] md:max-w-[26rem] lg:max-w-[30rem] h-auto rounded-lg shadow-lg"
+                     src="https://images.pexels.com/photos/32760136/pexels-photo-32760136/free-photo-of-caesars-palace-illuminated-at-night.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                     alt="Caesars Palace illuminated at night"
+                     loading="lazy"
+                     onerror="this.onerror=null;this.src='https://placehold.co/1260x750/cccccc/333333?text=Image+Not+Found';">
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== BAGIAN VIDEO BARU DIMULAI ===== -->
+    <section class="py-10 md:py-16 w-full scroll-animate">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <!-- JUDUL BARU DITAMBAHKAN -->
+            <h3 class="text-black text-h3-responsive font-light leading-snug mb-8 text-center">
+                Freedom
+            </h3>
+            
+            <!-- Wrapper untuk video agar responsif dan memiliki sisi tumpul -->
+            <div class="w-full aspect-video rounded-lg shadow-lg overflow-hidden">
+                <iframe
+                    class="w-full h-full"
+                    src="https://www.youtube.com/embed/HC2PHvpNMZI?autoplay=1&loop=1&playlist=HC2PHvpNMZI&controls=1&rel=0&showinfo=0&modestbranding=1"
+                    title="YouTube video player - LEODRA"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        </div>
+    </section>
+    <!-- ===== BAGIAN VIDEO BARU SELESAI ===== -->
+
+    <!-- Mandalay Bay Overlay Section -->
+    <section class="relative w-full h-72 md:h-[400px] bg-cover bg-center flex items-center justify-center text-white text-center rounded-md shadow-lg scroll-animate" style="background-image: url('https://images.pexels.com/photos/27956672/pexels-photo-27956672/free-photo-of-the-las-vegas-strip-is-seen-from-the-top-of-a-building.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'); margin-top: 2.5rem;">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-md">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-lg">
+                <h2 class="text-h2-responsive font-normal mb-3">Mandalay Bay Resort and Casino</h2>
+                <p class="text-p-responsive font-light leading-relaxed">Mandalay Bay Resort and Casino adalah sebuah <a href="https://en.wikipedia.org/wiki/Casino" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Kasino">kasino</a> <a href="https://en.wikipedia.org/wiki/Hotel" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Hotel">hotel</a> <a href="https://en.wikipedia.org/wiki/Luxury" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Kemewahan">mewah</a> bertingkat 39 di <a href="https://en.wikipedia.org/wiki/Las_Vegas_Strip" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Las Vegas Strip">Las Vegas Strip</a> di <a href="https://en.wikipedia.org/wiki/Las_Vegas" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Las Vegas">Las Vegas</a>. Dimiliki oleh <a href="https://en.wikipedia.org/wiki/MGM_Resorts_International" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang MGM Mirage">MGM Mirage</a>. Lima tingkat teratas (35-39) bangunan hotel utama digunakan oleh <a href="https://en.wikipedia.org/wiki/Four_Seasons_Hotel_Las_Vegas" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Four Seasons Hotel Las Vegas">Four Seasons Hotel Las Vegas</a>.<a href="https://en.wikipedia.org/wiki/Mandalay_Bay#cite_note-1" target="_blank" class="mandalay-link" aria-label="Referensi 1">[1]</a> Terhubung oleh <a href="https://en.wikipedia.org/wiki/Mandalay_Bay_Tram" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Mandalay Bay Tram">Mandalay Bay Tram</a> ke properti tetangganya, <a href="https://en.wikipedia.org/wiki/Excalibur_Hotel_and_Casino" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Excalibur">Excalibur</a> dan <a href="https://en.wikipedia.org/wiki/Luxor_Las_Vegas" target="_blank" class="mandalay-link" aria-label="Pelajari lebih lanjut tentang Luxor">Luxor</a>.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section with Detailed Explanation -->
+    <!-- PERUBAHAN DIMULAI: Footer dirombak total agar terlihat profesional seperti Apple -->
+    <footer class="bg-gray-100 py-10 md:py-16 mt-10 md:mt-16 w-full scroll-animate">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl text-xs text-gray-500">
+            
+            <!-- Bagian Legal/Disclaimer (opsional, meniru Apple) -->
+            <div class="space-y-2 mb-8">
+                <p>1. Perdagangan memiliki risiko. Kinerja masa lalu tidak menjamin hasil di masa depan. Informasi di situs ini hanya untuk tujuan edukasi.</p>
+                <p>2. Beberapa fitur atau layanan mungkin tidak tersedia di semua wilayah atau bahasa. <a href="#" class="text-gray-600 underline hover:text-black">Selengkapnya...</a></p>
+                <p>3. LEODRA tidak bertanggung jawab atas kerugian apa pun yang timbul dari penggunaan informasi di situs ini.</p>
+            </div>
+
+            <!-- Garis Pemisah -->
+            <hr class="border-gray-300 mb-8">
+
+            <!-- Sitemap Grid (5 Kolom) -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
+                
+                <!-- Kolom 1 -->
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3 text-sm">Layanan</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-black">Analisis Pasar</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Sinyal Perdagangan</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Edukasi</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Manajemen Akun</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Konsultasi</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Kolom 2 -->
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3 text-sm">Akun</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-black">Kelola Akun Anda</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Masuk Anggota</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Buka Akun Baru</a></li>
+                    </ul>
+                     <h4 class="font-semibold text-gray-900 mb-3 mt-6 text-sm">Platform</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-black">MetaTrader 4</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">MetaTrader 5</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">WebTrader</a></li>
+                    </ul>
+                </div>
+
+                <!-- Kolom 3 -->
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3 text-sm">Untuk Bisnis</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-black">Leodra dan Bisnis</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Program Kemitraan</a></li>
+                    </ul>
+                    <h4 class="font-semibold text-gray-900 mb-3 mt-6 text-sm">Untuk Institusi</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-black">Layanan Institusional</a></li>
+                    </ul>
+                </div>
+
+                <!-- Kolom 4 -->
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3 text-sm">Nilai-nilai Leodra</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-black">Aksesibilitas</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Transparansi</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Regulasi</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Privasi</a></li>
+                    </ul>
+                </div>
+
+                <!-- Kolom 5 -->
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-3 text-sm">Tentang Leodra</h4>
+                    <ul class="space-y-2">
+                        <li><a href="about_new.html" class="text-gray-600 hover:text-black">Newsroom</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Kepemimpinan</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Investor</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Etika & Kepatuhan</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-black">Karier</a></li>
+                        <li><a href="contact.html" class="text-gray-600 hover:text-black">Hubungi Kami</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Bagian Copyright Bawah -->
+            <div class="mt-10 pt-6 border-t border-gray-300">
+                <p class="mb-2">Perlu bantuan? Hubungi <a href="contact.html" class="text-blue-600 hover:underline">tim support</a> kami.</p>
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center">
+                    <div class="mb-2 sm:mb-0">
+                        <p>Hak Cipta © 2025 LEODRA. Hak cipta dilindungi undang-undang.</p>
+                    </div>
+                    <!-- Tautan legal untuk mobile (wrap) dan desktop (inline) -->
+                    <div class="flex flex-wrap -mx-2 sm:mx-0 sm:space-x-4 my-2 sm:my-0">
+                        <a href="#" class="hover:text-black px-2 sm:px-0">Kebijakan Privasi</a>
+                        <span class="select-none hidden sm:inline">|</span>
+                        <a href="#" class="hover:text-black px-2 sm:px-0">Ketentuan Penggunaan</a>
+                        <span class="select-none hidden sm:inline">|</span>
+                        <a href="#" class="hover:text-black px-2 sm:px-0">Legal</a>
+                        <span class="select-none hidden sm:inline">|</span>
+                        <a href="#" class="hover:text-black px-2 sm:px-0">Peta Situs</a>
+                    </div>
+                    <div>
+                        <p>Indonesia</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+    <!-- PERUBAHAN SELESAI -->
+
+    <script>
+        // JavaScript for mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+            const menuIcon = document.querySelector('.menu-icon');
+            mobileNavOverlay.classList.toggle('open');
+            menuIcon.classList.toggle('open'); // Toggle 'open' class on the menu icon
+            // Optional: Add/remove overflow-hidden to body to prevent scrolling when menu is open
+            document.body.classList.toggle('overflow-hidden');
+        }
+
+        // Function to open the custom message modal
+        function openMessageModal(message) {
+            const messageModal = document.getElementById('messageModal');
+            const messageModalContent = document.getElementById('messageModalContent');
+            messageModalContent.innerHTML = `<p>${message}</p>`;
+            messageModal.classList.add('open');
+            document.body.classList.add('overflow-hidden');
+            // Set focus to the close button for accessibility
+            messageModal.querySelector('button').focus();
+        }
+
+        // Function to close the custom message modal
+        function closeMessageModal() {
+            const messageModal = document.getElementById('messageModal');
+            messageModal.classList.remove('open');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        // Function to handle search navigation - now performs a Google search
+        function performSearch(inputId) {
+            const searchInput = document.getElementById(inputId);
+            const query = searchInput.value.trim();
+
+            if (query) {
+                // Perform a Google search
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+            } else {
+                openMessageModal("Silakan masukkan kata kunci pencarian.");
+            }
+
+            // Close mobile menu if search was performed from there
+            if (inputId === 'mobile-search-input' && document.getElementById('mobile-nav-overlay').classList.contains('open')) {
+                toggleMobileMenu();
+            }
+        }
+
+        // Add event listeners for 'Enter' key on search inputs
+        document.addEventListener('DOMContentLoaded', () => {
+            const desktopSearchInput = document.getElementById('desktop-search-input');
+            if (desktopSearchInput) {
+                desktopSearchInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        performSearch('desktop-search-input');
+                    }
+                });
+            }
+
+            const mobileSearchInput = document.getElementById('mobile-search-input');
+            if (mobileSearchInput) {
+                mobileSearchInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        performSearch('mobile-search-input');
+                    }
+                });
+            }
+
+            // Intersection Observer for scroll animations
+            const animateElements = document.querySelectorAll('.scroll-animate');
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Add 'is-visible' when element enters viewport
+                        entry.target.classList.add('is-visible');
+                        // No longer unobserving immediately, allowing for re-animation if needed
+                        // If you want the animation to play only once, uncomment the line below:
+                        // observer.unobserve(entry.target);
+                    } else {
+                        // Remove 'is-visible' when element leaves viewport to allow re-animation on scroll back up
+                        entry.target.classList.remove('is-visible');
+                    }
+                });
+            }, {
+                rootMargin: '0px',
+                threshold: 0.1 // Trigger when 10% of the element is visible
+            });
+
+            animateElements.forEach(element => {
+                observer.observe(element);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Risiko Trading - LEODRA (Fixed Layout)</title>
+    
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Memuat Library Eksternal -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #334155; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .input-modern { background-color: #f1f5f9; border: 1px solid transparent; transition: all 0.3s ease; }
+        .input-modern:focus { background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 0 0 4px rgba(226, 232, 240, 0.5); outline: none; }
+        
+        .card-clean { background-color: #ffffff; border: 1px solid #f1f5f9; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); }
+        
+        .stat-box { background-color: #f8fafc; border-radius: 1rem; padding: 1rem; border: 1px solid #f1f5f9; transition: transform 0.2s; }
+        .stat-box:hover { border-color: #e2e8f0; }
+        
+        .text-xxs { font-size: 0.65rem; }
+        
+        .header-global { position: fixed; top: 0; left: 0; right: 0; padding: 1rem 1.5rem; background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; z-index: 50; color: #333333; font-size: 0.875rem; }
+        @media (min-width: 768px) { .header-global { padding: 1.5rem 2.5rem; } }
+        
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; font-size: 0.75rem; background-color: #f1f5f9; border-radius: 0.5rem; margin-top: 0.5rem; }
+        
+        .monthly-table th, .monthly-table td { padding: 0.75rem 1rem; text-align: center; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+        .monthly-table th:first-child, .monthly-table td:first-child { text-align: left; position: sticky; left: 0; background-color: white; z-index: 10; border-right: 2px solid #f1f5f9; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="header-global">
+        <!-- Logo/Brand on the left -->
+        <div class="flex items-center">
+            <!-- Desktop text size is controlled by the 'text-sm' class -->
+            <a href="index.html" class="font-light text-sm-responsive text-gray-800">Backtest</a>
+        </div>
+
+        <!-- Desktop Navigation (Right side) -->
+        <nav class="hidden md:flex items-center space-x-6 font-light">
+            <a href="index.html" class="hover:text-blue-600 transition-colors">Home</a>
+            <a href="about_new.html" class="hover:text-blue-600 transition-colors">About</a>
+            <a href="services.html" class="hover:text-blue-600 transition-colors">Services</a>
+            <a href="contact.html" class="hover:text-blue-600 transition-colors">Contact</a>
+            <a href="beranda.html" class="hover:text-blue-600 transition-colors">Beranda</a>
+            <a href="investasi.html" class="hover:text-blue-600 transition-colors ">Investasi</a>
+            <a href="backtest.html" class="hover:text-blue-600 transition-colors font-medium text-blue-600">Backtest</a>
+        </nav>
+
+        <div class="md:hidden">
+            <button id="hamburger-button" class="text-gray-700 focus:outline-none">
+                <svg id="hamburger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </div>
+    </header>
+    
+    <div class="pt-24 pb-4 flex justify-center">
+        <h1 class="text-3xl font-light tracking-[0.25em] text-slate-800 uppercase">LEODRA</h1>
+    </div>
+
+    <!-- MENU MOBILE -->
+    <div id="mobile-menu" class="hidden fixed inset-0 bg-white z-[60] transition-opacity duration-300 ease-in-out">
+        <button id="mobile-menu-close-btn" class="absolute top-5 right-5 text-gray-700 hover:text-gray-900">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <div class="flex flex-col items-center justify-center h-full w-full p-6 pt-20">
+            <nav class="flex flex-col items-center space-y-5">
+                <a href="index.html" class="hover:text-blue-600 transition-colors">Home</a>
+            <a href="about_new.html" class="hover:text-blue-600 transition-colors">About</a>
+            <a href="services.html" class="hover:text-blue-600 transition-colors">Services</a>
+            <a href="contact.html" class="hover:text-blue-600 transition-colors">Contact</a>
+            <a href="beranda.html" class="hover:text-blue-600 transition-colors">Beranda</a>
+            <a href="investasi.html" class="hover:text-blue-600 transition-colors">Investasi</a>
+            <a href="backtest.html" class="hover:text-blue-600 transition-colors font-medium text-blue-600">Backtest</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- KIRI -->
+            <section class="lg:col-span-7 space-y-6">
+                <!-- INPUT -->
+                <div class="card-clean p-6 md:p-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6">Parameter Trade</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Modal ($)</label><input type="number" id="modal" value="5000" class="input-modern w-full p-3 rounded-xl text-slate-800 font-bold" placeholder="0.00"></div>
+                        <div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Risiko (%)</label><input type="text" id="risk-percent" value="0.4%" readonly class="input-modern w-full p-3 rounded-xl text-slate-500 bg-slate-100 cursor-not-allowed"></div>
+                        <div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Aset (Pair)</label><select id="pair" class="input-modern w-full p-3 rounded-xl text-slate-800 font-medium"><option value="XAUUSD">XAUUSD (Gold)</option><option value="NASDAQ">NASDAQ (US100)</option></select></div>
+                        <div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Posisi</label><select id="order-type" class="input-modern w-full p-3 rounded-xl text-slate-800 font-medium"><option value="buy">Buy (Long)</option><option value="sell">Sell (Short)</option></select></div>
+                        <div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Harga Entry</label><input type="number" id="entry-price" class="input-modern w-full p-3 rounded-xl text-slate-800 font-medium" placeholder="0.00"></div>
+                        <div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Stop Loss</label><input type="number" id="sl-price" class="input-modern w-full p-3 rounded-xl text-slate-800 font-medium" placeholder="0.00"></div>
+                        <div class="col-span-1 md:col-span-2 border-t border-slate-100 pt-4 mt-2"><h3 class="text-sm font-bold text-slate-800 mb-3">Waktu Eksekusi</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-5"><div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Waktu Open</label><input type="datetime-local" id="open-time" class="input-modern w-full p-3 rounded-xl text-slate-600 text-sm"></div><div class="space-y-2"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Waktu Close</label><input type="datetime-local" id="close-time" class="input-modern w-full p-3 rounded-xl text-slate-600 text-sm"></div></div></div>
+                    </div>
+                </div>
+
+                <!-- HASIL -->
+                <div class="card-clean p-6 md:p-8 bg-gradient-to-br from-white to-slate-50">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Hasil Kalkulasi</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Risiko ($)</label><input type="text" id="result-risk-usd" readonly class="block w-full mt-1 text-2xl font-bold text-rose-600 bg-transparent border-none p-0 focus:ring-0" value="$0.0"></div>
+                        <div class="bg-slate-800 p-4 rounded-xl border border-slate-800 shadow-sm"><label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Lot Size</label><input type="text" id="result-lot-size" readonly class="block w-full mt-1 text-2xl font-bold text-white bg-transparent border-none p-0 focus:ring-0" value="0.00"></div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">SL Pips</label><input type="text" id="result-sl-pips" readonly class="block w-full mt-1 text-xl font-bold text-slate-800 bg-transparent border-none p-0 focus:ring-0" value="0"></div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">TP Pips</label><input type="text" id="result-tp-pips" readonly class="block w-full mt-1 text-xl font-bold text-emerald-600 bg-transparent border-none p-0 focus:ring-0" value="0"></div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">TP (1:2)</label><input type="text" id="result-tp-price" readonly class="block w-full mt-1 text-xl font-bold text-emerald-600 bg-transparent border-none p-0 focus:ring-0" value="0.00"></div>
+                    </div>
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div id="calculation-status" class="text-xs font-medium text-slate-400 w-full md:w-auto text-center md:text-left">Siap menghitung...</div>
+                        <div class="flex gap-3 w-full md:w-auto"><button id="btn-reset" class="flex-1 px-5 py-2.5 rounded-xl font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition text-sm">Reset</button><button id="btn-save" class="flex-1 px-5 py-2.5 rounded-xl font-semibold text-white bg-slate-900 hover:bg-slate-800 transition shadow-lg shadow-slate-200 text-sm disabled:opacity-50" disabled>Simpan</button></div>
+                    </div>
+                </div>
+
+                <!-- CHART -->
+                <div class="card-clean p-6 md:p-8">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Grafik Perkembangan</h3>
+                    <p class="text-xs text-slate-400 mb-4 flex items-center gap-2"><span class="inline-block w-3 h-3 border-l-2 border-slate-400 border-dashed"></span>Garis putus-putus menandakan pergantian bulan</p>
+                    <div class="relative w-full h-64"><canvas id="growthChartCanvas"></canvas></div>
+                </div>
+            </section>
+
+            <!-- KANAN -->
+            <aside class="lg:col-span-5 space-y-6">
+                <!-- HISTORY -->
+                <section class="card-clean flex flex-col h-[400px]">
+                    <div class="p-5 border-b border-slate-50 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+                        <h2 class="text-lg font-bold text-slate-800">Riwayat Trade</h2>
+                        <button id="btn-delete-all" title="Hapus Semua" class="text-xs text-rose-500 hover:bg-rose-50 px-3 py-1 rounded-lg transition">Hapus Semua</button>
+                    </div>
+                    <div id="history-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+                        <div id="history-empty-state" class="flex flex-col items-center justify-center h-full text-slate-300"><span class="text-xs font-medium">Belum ada data</span></div>
+                    </div>
+                </section>
+
+                <!-- STATS -->
+                <section class="card-clean p-6">
+                    <h2 class="text-lg font-bold text-slate-800 mb-6">Statistik Performa Lengkap</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <!-- PERBAIKAN: Posisi Saldo Akhir dan Win Rate DITUKAR -->
+                        <div class="stat-box col-span-2 sm:col-span-3 bg-slate-800 border-slate-800 flex justify-between items-center">
+                            <!-- KIRI: Win Rate -->
+                            <div><span class="text-[10px] uppercase font-bold text-slate-400 block">Win Rate</span><span id="stat-winrate" class="text-lg font-bold text-white">0%</span></div>
+                            <!-- KANAN: Saldo Akhir -->
+                            <div class="text-right"><span class="text-[10px] uppercase font-bold text-slate-400 block">Saldo Akhir</span><span id="stat-final-balance" class="text-2xl font-bold text-white">$0.00</span></div>
+                        </div>
+
+                        <!-- NEW STAT: Probabilitas Loss & Nominal -->
+                        <div class="stat-box col-span-2 sm:col-span-3 bg-rose-50 border-rose-100 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-rose-400 block mb-1">Probabilitas Loss</span>
+                                <span id="stat-loss-prob" class="text-lg font-bold text-rose-600">0%</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] uppercase font-bold text-rose-400 block mb-1">Total Nominal Rugi</span>
+                                <span id="stat-total-loss-nominal" class="text-lg font-bold text-rose-600">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Rata2 Harian</span><span id="stat-daily-perc" class="text-sm font-bold text-slate-800">0%</span></div>
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Rata2 Bulanan</span><span id="stat-monthly-perc" class="text-sm font-bold text-slate-800">0%</span></div>
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Rata2 Tahunan</span><span id="stat-yearly-perc" class="text-sm font-bold text-slate-800">0%</span></div>
+                        <div class="stat-box col-span-2"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Rata2 Holding Period</span><span id="stat-holding-period" class="text-sm font-bold text-slate-800">-</span></div>
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Max DD %</span><span id="stat-drawdown-perc" class="text-sm font-bold text-rose-600">0%</span></div>
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Max Pips</span><span id="stat-max-pips" class="text-sm font-bold text-emerald-600">0</span></div>
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Min Pips</span><span id="stat-min-pips" class="text-sm font-bold text-rose-600">0</span></div>
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Max Profit ($)</span><span id="stat-max-usd" class="text-sm font-bold text-emerald-600">$0</span></div>
+                        <div class="stat-box"><span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Max Loss ($)</span><span id="stat-min-usd" class="text-sm font-bold text-rose-600">$0</span></div>
+                        
+                        <!-- NEW STATS UI: Consecutive with Details -->
+                        <div class="stat-box">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Consic. Profit</span>
+                            <span id="stat-con-win" class="text-sm font-bold text-emerald-600">0</span>
+                            <div class="mt-2 border-t border-slate-100 pt-1">
+                                <span id="stat-con-win-usd" class="block text-xs font-bold text-emerald-600">$0.00</span>
+                                <span id="stat-con-win-pips" class="block text-[10px] text-slate-500">0 Pips</span>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Consic. Loss</span>
+                            <span id="stat-con-loss" class="text-sm font-bold text-rose-600">0</span>
+                            <div class="mt-2 border-t border-slate-100 pt-1">
+                                <span id="stat-con-loss-usd" class="block text-xs font-bold text-rose-600">$0.00</span>
+                                <span id="stat-con-loss-pips" class="block text-[10px] text-slate-500">0 Pips</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RESTORE DATA -->
+                    <div class="mt-6 pt-6 border-t border-slate-100">
+                         <h3 class="text-xs font-bold text-emerald-600 uppercase mb-3 flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>Restore Data (Penting)</h3>
+                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                            <p class="text-xs text-emerald-700 mb-3">Unggah file Excel hasil unduhan sebelumnya untuk mengembalikan data.</p>
+                            <div class="relative">
+                                <input type="file" id="import-excel" accept=".xlsx, .xls" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                <button class="w-full py-2 rounded-lg bg-white border border-emerald-200 text-emerald-600 font-bold text-sm hover:bg-emerald-100 transition">Kembalikan Data dari Excel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EXPORT -->
+                    <div class="mt-6 pt-6 border-t border-slate-100">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Ekspor Data Lengkap</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="btn-download-excel" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-sm transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Unduh Excel</button>
+                            <button id="btn-download-pdf" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold text-sm transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>Unduh PDF</button>
+                        </div>
+                    </div>
+
+                    <!-- MANAJEMEN FILE -->
+                    <div class="mt-6 pt-6 border-t border-slate-100">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Manajemen File (Max 4)</h3>
+                        <div class="space-y-4">
+                            <div><div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold text-slate-500">File Excel</span><label for="upload-ui-excel" class="text-xs text-blue-600 cursor-pointer hover:underline">+ Tambah</label><input type="file" id="upload-ui-excel" accept=".xlsx" class="hidden"></div><div id="list-excel" class="space-y-1"></div></div>
+                             <div><div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold text-slate-500">File PDF</span><label for="upload-ui-pdf" class="text-xs text-blue-600 cursor-pointer hover:underline">+ Tambah</label><input type="file" id="upload-ui-pdf" accept=".pdf" class="hidden"></div><div id="list-pdf" class="space-y-1"></div></div>
+                             <div><div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold text-slate-500">File Template (.tpl)</span><label for="upload-ui-tpl" class="text-xs text-blue-600 cursor-pointer hover:underline">+ Tambah</label><input type="file" id="upload-ui-tpl" accept=".tpl" class="hidden"></div><div id="list-tpl" class="space-y-1"></div></div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <!-- TABEL BULANAN -->
+        <section class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+            <div class="card-clean p-6 md:p-8 overflow-hidden">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Tabel Perkembangan Bulanan</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-600 monthly-table">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-50 font-bold" id="monthly-thead"></thead>
+                        <tbody id="monthly-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="error-modal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4 hidden">
+        <div class="bg-white w-full max-w-sm p-6 rounded-2xl shadow-2xl border-l-4 border-rose-500">
+            <div class="text-rose-600 font-bold text-lg mb-2">Kesalahan Input</div>
+            <p id="error-modal-message" class="text-sm text-slate-600 mb-4">...</p>
+            <div class="flex justify-end"><button id="error-modal-close" class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-bold">OK</button></div>
+        </div>
+    </div>
+    <div id="sl-warning-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4 hidden">
+        <div class="bg-white w-full max-w-sm p-6 rounded-2xl shadow-2xl">
+            <div class="text-amber-500 font-bold text-lg mb-2">Peringatan</div>
+            <p id="sl-modal-message" class="text-sm text-slate-600 mb-4">Batas SL terlampaui.</p>
+            <div class="flex justify-end gap-2">
+                <button id="sl-modal-ok" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 text-sm font-bold">Batal</button>
+                <button id="sl-modal-apply" class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm font-bold">Gunakan</button>
+            </div>
+        </div>
+    </div>
+    <div id="delete-all-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4 hidden">
+        <div class="bg-white w-full max-w-sm p-6 rounded-2xl shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Hapus Semua?</h3>
+            <div class="flex justify-end gap-3">
+                <button id="delete-all-cancel" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+                <button id="delete-all-confirm" class="px-4 py-2 rounded-lg text-sm font-bold text-white bg-rose-500 hover:bg-rose-600">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const RISK_PERCENT = 0.004; 
+        const RR_RATIO = 2; 
+
+        // DOM Elements
+        let modalInput, pairInput, orderTypeInput, entryPriceInput, slPriceInput;
+        let openTimeInput, closeTimeInput, riskUsdOutput, lotSizeOutput, slPipsOutput, tpPipsOutput, tpPriceOutput, statusElement;
+        let saveBtn, resetBtn, historyList; // PERBAIKAN: Dihapus historyEmptyState dari variabel
+        let statTotalTrades, statWinrate, statFinalBalance, statDrawdownPerc;
+        let statDailyPerc, statMonthlyPerc, statYearlyPerc, statHoldingPeriod;
+        let statMaxPips, statMinPips, statMaxUsd, statMinUsd;
+        let slWarningModal, deleteAllModal, errorModal, errorMessage;
+        let btnDownloadExcel, btnDownloadPdf, hamburgerButton, mobileMenu, mobileMenuCloseBtn;
+        let importExcelInput, monthlyThead, monthlyTbody;
+        // New Stat DOM
+        let statConWin, statConLoss, statLossProb, statTotalLossNominal;
+        let statConWinUsd, statConWinPips, statConLossUsd, statConLossPips;
+
+        let tradeHistory = [];
+        let currentCalcData = {};
+        let currentAnalyticsData = {};
+        let currentMonthlyData = {}; 
+        let growthChartInstance = null;
+        let uploadedFiles = { excel: [], pdf: [], tpl: [] };
+
+        // Helper: Generate UUID with Fallback
+        function generateUUID() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            // Fallback for non-secure contexts
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function parseSafeFloat(input) {
+            if (typeof input === 'number') return input;
+            if (typeof input !== 'string') return 0;
+            return parseFloat(input.replace(/\$/g, '').replace(/,/g, '').trim()) || 0;
+        }
+
+        function setDefaultDates() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
+            if(openTimeInput) openTimeInput.value = localISOTime;
+            if(closeTimeInput) closeTimeInput.value = localISOTime;
+        }
+        function showErrorModal(msg) {
+            errorMessage.textContent = msg;
+            errorModal.classList.remove('hidden');
+        }
+        const safeDateISO = (val) => {
+            if (!val) return new Date().toISOString().slice(0, 16);
+            const d = new Date(val);
+            if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16);
+            return d.toISOString().slice(0, 16);
+        };
+
+        window.setStatus = function(id, status) {
+            const t = tradeHistory.find(x => x.id === id);
+            if (t) { t.status = status; saveTradeHistory(); renderHistory(); }
+        }
+        
+        window.deleteTrade = function(id) {
+            tradeHistory = tradeHistory.filter(t => t.id !== id);
+            saveTradeHistory();
+            renderHistory();
+        }
+
+        window.downloadFile = function(type, index) {
+            const file = uploadedFiles[type][index];
+            const url = URL.createObjectURL(file);
+            const a = document.createElement('a'); a.href=url; a.download=file.name; a.click();
+        };
+
+        // --- FILE UPLOAD SETUP ---
+        function setupFileUploads() {
+             ['excel','pdf','tpl'].forEach(t => {
+                const inputEl = document.getElementById(`upload-ui-${t}`);
+                if(inputEl) {
+                    inputEl.addEventListener('change', function() {
+                        if(this.files[0]) {
+                            if(uploadedFiles[t].length >= 4) return showErrorModal("Max 4 files");
+                            uploadedFiles[t].push(this.files[0]);
+                            const cont = document.getElementById(`list-${t}`);
+                            if(cont) {
+                                cont.innerHTML = '';
+                                uploadedFiles[t].forEach((f, i) => {
+                                    const d = document.createElement('div'); d.className = 'file-item';
+                                    d.innerHTML = `<span>${f.name}</span><button class="text-blue-600 font-bold" onclick="downloadFile('${t}',${i})">Unduh</button>`;
+                                    cont.appendChild(d);
+                                });
+                            }
+                        }
+                    });
+                }
+             });
+        }
+
+        // --- MAIN LOGIC ---
+        function calculateRiskData() {
+            const modal = parseSafeFloat(modalInput.value);
+            const pair = pairInput.value;
+            const orderType = orderTypeInput.value;
+            const entryPrice = parseSafeFloat(entryPriceInput.value);
+            const slPrice = parseSafeFloat(slPriceInput.value);
+
+            if (!modal || !entryPrice || !slPrice || modal <= 0) return { status: "incomplete", message: "Lengkapi data..." };
+
+            let pipsMultiplier = pair === 'XAUUSD' ? 10 : 1;
+            let decimals = pair === 'XAUUSD' ? 2 : 0;
+            let maxSlPips = pair === 'XAUUSD' ? 300 : 3000;
+            let pipValuePerLot = pair === 'XAUUSD' ? 10 : 1;
+
+            if ((orderType === 'buy' && entryPrice < slPrice) || (orderType === 'sell' && entryPrice > slPrice)) {
+                return { status: "error", message: `Posisi SL salah untuk ${orderType.toUpperCase()}!` };
+            }
+
+            const rawPips = Math.abs(entryPrice - slPrice) * pipsMultiplier;
+            const slPips = Math.round(rawPips); 
+            const targetRiskUsd = modal * RISK_PERCENT;
+            let effectivePips = slPips === 0 ? 1 : slPips;
+            let rawLot = targetRiskUsd / (effectivePips * pipValuePerLot);
+            let lotSize = Math.round(rawLot * 100) / 100;
+            if (lotSize < 0.01 && rawLot > 0) lotSize = 0.01;
+
+            const actualRiskUsd = lotSize * slPips * pipValuePerLot;
+            const pipsToTp = slPips * RR_RATIO;
+            let tpPrice, suggestedSl;
+
+            if (orderType === 'buy') {
+                tpPrice = entryPrice + (pipsToTp / pipsMultiplier);
+                suggestedSl = entryPrice - (maxSlPips / pipsMultiplier);
+            } else {
+                tpPrice = entryPrice - (pipsToTp / pipsMultiplier);
+                suggestedSl = entryPrice + (maxSlPips / pipsMultiplier);
+            }
+
+            return {
+                status: "success",
+                modal, pair, type: orderType, entry: entryPrice, sl: slPrice, tpPrice,
+                riskUsd: actualRiskUsd, lotSize, slPips, tpPips: pipsToTp,
+                potentialProfit: actualRiskUsd * RR_RATIO,
+                decimals, maxSlPips, limitExceeded: slPips > maxSlPips, suggestedSl
+            };
+        }
+
+        function handleCalculation() {
+            const data = calculateRiskData();
+            currentCalcData = data;
+            if (data.status === "success") {
+                riskUsdOutput.value = `$${data.riskUsd.toFixed(1)}`;
+                lotSizeOutput.value = data.lotSize.toFixed(2);
+                
+                let displaySlPips = data.pair === 'NASDAQ' ? data.slPips * 10 : data.slPips;
+                let displayTpPips = data.pair === 'NASDAQ' ? data.tpPips * 10 : data.tpPips;
+                
+                slPipsOutput.value = displaySlPips.toFixed(0);
+                tpPipsOutput.value = displayTpPips.toFixed(0); 
+                tpPriceOutput.value = data.tpPrice.toFixed(2);
+                
+                statusElement.textContent = `TP (1:2): $${data.potentialProfit.toFixed(2)}`;
+                
+                if (data.limitExceeded) {
+                    saveBtn.disabled = true;
+                    statusElement.classList.add("text-rose-500");
+                    statusElement.textContent = "SL melebihi batas!";
+                } else {
+                    saveBtn.disabled = false;
+                    statusElement.classList.remove("text-rose-500");
+                }
+            } else {
+                saveBtn.disabled = true;
+                if (data.status === 'error') {
+                    statusElement.textContent = data.message;
+                    statusElement.classList.add("text-rose-500");
+                } else {
+                    statusElement.textContent = "Siap menghitung...";
+                    statusElement.classList.remove("text-rose-500");
+                }
+            }
+            saveFormInputs();
+        }
+
+        function handleSaveTrade() {
+            const check = calculateRiskData();
+            if (check.status === "error") return showErrorModal(check.message);
+            if (check.status === "incomplete") return showErrorModal("Lengkapi data!");
+            if (currentCalcData.status !== "success" || currentCalcData.limitExceeded) return;
+
+            let savedSlPips = currentCalcData.slPips;
+            let savedTpPips = currentCalcData.tpPips;
+            
+            if (currentCalcData.pair === 'NASDAQ') {
+                savedSlPips = savedSlPips * 10;
+                savedTpPips = savedTpPips * 10;
+            }
+
+            const newTrade = {
+                id: generateUUID(),
+                timestamp: openTimeInput.value || new Date().toISOString(), 
+                closeTime: closeTimeInput.value || new Date().toISOString(),
+                modal: currentCalcData.modal, riskPercent: RISK_PERCENT * 100, pair: currentCalcData.pair, type: currentCalcData.type,
+                entry: currentCalcData.entry.toFixed(2), sl: currentCalcData.sl.toFixed(2), tp: currentCalcData.tpPrice.toFixed(2),
+                lotSize: currentCalcData.lotSize.toFixed(2), riskUsd: currentCalcData.riskUsd.toFixed(2),
+                potentialProfit: currentCalcData.potentialProfit.toFixed(2), 
+                slPips: savedSlPips, 
+                tpPips: savedTpPips,
+                status: 'pending'
+            };
+            tradeHistory.push(newTrade);
+            saveTradeHistory();
+            renderHistory();
+            handleCalculation();
+        }
+
+        function updateAnalytics() {
+            const initialModal = parseSafeFloat(modalInput.value) || 5000;
+            const completed = tradeHistory.filter(t => t.status === 'win' || t.status === 'loss');
+            const wins = completed.filter(t => t.status === 'win').length;
+            const losses = completed.filter(t => t.status === 'loss').length;
+            const winrate = completed.length > 0 ? (wins / completed.length * 100) : 0;
+            const lossrate = completed.length > 0 ? (100 - winrate) : 0;
+
+            let running = initialModal, peak = initialModal, maxDD = 0;
+            const lists = { pips:[], usd:[] };
+            const monthlyData = {};
+            let totalHolding = 0;
+            let totalLossNominal = 0;
+
+            let globalMaxConWin = 0, globalMaxConLoss = 0;
+            let globalCurrConWin = 0, globalCurrConLoss = 0;
+            
+            let globalCurrConWinUsd = 0, globalCurrConWinPips = 0;
+            let globalCurrConLossUsd = 0, globalCurrConLossPips = 0;
+            
+            let globalMaxConWinUsd = 0, globalMaxConWinPips = 0;
+            let globalMaxConLossUsd = 0, globalMaxConLossPips = 0;
+
+            const chronologicalCompleted = [...completed].sort((a,b) => new Date(a.closeTime) - new Date(b.closeTime));
+
+            chronologicalCompleted.forEach(t => {
+                const pL = t.status==='win' ? parseFloat(t.potentialProfit) : -parseFloat(t.riskUsd);
+                let pipVal = t.status==='win' ? parseFloat(t.tpPips) : -parseFloat(t.slPips);
+                
+                running += pL;
+                if(running > peak) peak = running;
+                const dd = peak > 0 ? (peak - running)/peak*100 : 0;
+                if(dd > maxDD) maxDD = dd;
+                const currentDD = peak > 0 ? (peak - running) / peak * 100 : 0;
+
+                lists.pips.push(pipVal); lists.usd.push(pL);
+                totalHolding += (new Date(t.closeTime) - new Date(t.timestamp));
+                
+                if (pL < 0) totalLossNominal += pL;
+
+                const d = new Date(t.closeTime);
+                const mName = d.toLocaleString('id-ID', {month:'short', year:'numeric'});
+                
+                if(!monthlyData[mName]) monthlyData[mName] = {
+                    pct:0, pips:0, usd:0, count:0, win:0, loss:0, maxDD: 0,
+                    currConWin: 0, currConLoss: 0, maxConWin: 0, maxConLoss: 0
+                };
+
+                if (currentDD > monthlyData[mName].maxDD) monthlyData[mName].maxDD = currentDD;
+
+                const tModal = parseFloat(t.modal) || initialModal;
+                monthlyData[mName].pct += (pL/tModal)*100;
+                monthlyData[mName].pips += pipVal;
+                monthlyData[mName].usd += pL; 
+                monthlyData[mName].count++;
+                
+                if(t.status==='win') {
+                    globalCurrConWin++;
+                    globalCurrConWinUsd += pL;
+                    globalCurrConWinPips += pipVal;
+                    globalCurrConLoss = 0;
+                    globalCurrConLossUsd = 0;
+                    globalCurrConLossPips = 0;
+
+                    if(globalCurrConWin > globalMaxConWin) {
+                        globalMaxConWin = globalCurrConWin;
+                        globalMaxConWinUsd = globalCurrConWinUsd;
+                        globalMaxConWinPips = globalCurrConWinPips;
+                    }
+                    
+                    monthlyData[mName].win++;
+                    monthlyData[mName].currConWin++;
+                    monthlyData[mName].currConLoss = 0;
+                    if(monthlyData[mName].currConWin > monthlyData[mName].maxConWin) monthlyData[mName].maxConWin = monthlyData[mName].currConWin;
+
+                } else {
+                    globalCurrConLoss++;
+                    globalCurrConLossUsd += pL;
+                    globalCurrConLossPips += Math.abs(pipVal);
+                    globalCurrConWin = 0;
+                    globalCurrConWinUsd = 0;
+                    globalCurrConWinPips = 0;
+
+                    if(globalCurrConLoss > globalMaxConLoss) {
+                        globalMaxConLoss = globalCurrConLoss;
+                        globalMaxConLossUsd = globalCurrConLossUsd;
+                        globalMaxConLossPips = globalCurrConLossPips;
+                    }
+
+                    monthlyData[mName].loss++;
+                    monthlyData[mName].currConLoss++;
+                    monthlyData[mName].currConWin = 0;
+                    if(monthlyData[mName].currConLoss > monthlyData[mName].maxConLoss) monthlyData[mName].maxConLoss = monthlyData[mName].currConLoss;
+                }
+            });
+
+            const rawMaxP = lists.pips.length ? Math.max(...lists.pips) : 0;
+            const rawMinP = lists.pips.length ? Math.min(...lists.pips) : 0;
+            const rawMaxU = lists.usd.length ? Math.max(...lists.usd) : 0;
+            const rawMinU = lists.usd.length ? Math.min(...lists.usd) : 0;
+
+            const avgDaily = Object.values(monthlyData).reduce((a,b)=>a+b.pct,0) / (Object.keys(monthlyData).length*20 || 1); 
+            const avgMonthly = Object.values(monthlyData).reduce((a,b)=>a+b.pct,0) / (Object.keys(monthlyData).length || 1);
+            const avgYearly = avgMonthly * 12;
+            const avgHold = completed.length ? (totalHolding / completed.length / 3600000).toFixed(1) : 0;
+
+            statFinalBalance.textContent = `$${running.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+            statWinrate.textContent = `${winrate.toFixed(1)}%`;
+            statDrawdownPerc.textContent = `${maxDD.toFixed(2)}%`;
+            
+            document.getElementById('stat-loss-prob').textContent = `${lossrate.toFixed(1)}%`;
+            document.getElementById('stat-total-loss-nominal').textContent = `$${Math.abs(totalLossNominal).toLocaleString('en-US', {minimumFractionDigits:2})}`;
+
+            document.getElementById('stat-daily-perc').textContent = `${avgDaily.toFixed(2)}%`;
+            document.getElementById('stat-monthly-perc').textContent = `${avgMonthly.toFixed(2)}%`;
+            document.getElementById('stat-yearly-perc').textContent = `${avgYearly.toFixed(2)}%`;
+            document.getElementById('stat-holding-period').textContent = `${avgHold} Jam`;
+            document.getElementById('stat-max-pips').textContent = `+${rawMaxP.toFixed(0)}`;
+            document.getElementById('stat-min-pips').textContent = `${rawMinP.toFixed(0)}`;
+            document.getElementById('stat-max-usd').textContent = `+$${rawMaxU.toFixed(2)}`;
+            document.getElementById('stat-min-usd').textContent = `${rawMinU.toFixed(2)}`;
+            
+            document.getElementById('stat-con-win').textContent = `${globalMaxConWin}`;
+            document.getElementById('stat-con-win-usd').textContent = `+$${globalMaxConWinUsd.toFixed(2)}`;
+            document.getElementById('stat-con-win-pips').textContent = `+${globalMaxConWinPips.toFixed(0)} Pips`;
+
+            document.getElementById('stat-con-loss').textContent = `${globalMaxConLoss}`;
+            document.getElementById('stat-con-loss-usd').textContent = `$${globalMaxConLossUsd.toFixed(2)}`;
+            document.getElementById('stat-con-loss-pips').textContent = `-${globalMaxConLossPips.toFixed(0)} Pips`;
+
+            currentAnalyticsData = {
+                totalTrades: completed.length, winrate: winrate.toFixed(2)+'%', finalBalance: running, maxDrawdownPerc: maxDD.toFixed(2)+'%',
+                avgDaily, avgMonthly, avgYearly, avgHoldingHours: avgHold,
+                maxPipsVal: rawMaxP, minPipsVal: rawMinP, maxUsdVal: rawMaxU, minUsdVal: rawMinU,
+                conWin: globalMaxConWin, conLoss: globalMaxConLoss
+            };
+            currentMonthlyData = monthlyData;
+
+            renderGrowthChart(chronologicalCompleted, initialModal);
+            renderMonthlyTable(monthlyData);
+        }
+
+        function renderMonthlyTable(data) {
+            const months = Object.keys(data);
+            let thead = `<tr><th class="bg-slate-50 text-left">Bulan</th>`;
+            months.forEach(m => thead += `<th>${m}</th>`);
+            thead += `<th class="bg-slate-100">Total</th></tr>`;
+            monthlyThead.innerHTML = thead;
+
+            let html = "";
+            let totalUsd = 0, totalCount = 0;
+            months.forEach(m => { totalUsd += data[m].usd; totalCount += data[m].count; });
+
+            const row = (label, key, isCount=false, isNet=false) => {
+                let r = `<tr><td class="font-medium text-slate-700">${label}</td>`;
+                let rowSum = 0;
+                months.forEach(m => {
+                    const val = data[m][key];
+                    rowSum += val;
+                    r += `<td class="${val>=0?'text-emerald-600':'text-rose-600'}">${isCount?val:(val>0?'+':'')+val.toFixed(2)}</td>`;
+                });
+                if(isNet) rowSum = totalUsd; 
+                r += `<td class="font-bold bg-slate-50 ${rowSum>=0?'text-emerald-600':'text-rose-600'}">${isCount?totalCount:(rowSum>0?'+':'')+rowSum.toFixed(2)}</td></tr>`;
+                return r;
+            }
+            
+            html += row("Persentase (%)", "pct");
+            html += row("Pips", "pips");
+            html += row("Total Eksekusi", "count", true);
+            
+            let wlRow = `<tr><td class="font-medium text-slate-700">Profit / Loss</td>`;
+            let wSum=0, lSum=0;
+            months.forEach(m => {
+                wlRow += `<td>${data[m].win} P / ${data[m].loss} L</td>`;
+                wSum+=data[m].win; lSum+=data[m].loss;
+            });
+            wlRow += `<td class="font-bold bg-slate-50">${wSum} P / ${lSum} L</td></tr>`;
+            html += wlRow;
+
+            html += row("Total Win Bersih ($)", "usd", false, true);
+            
+            let neRow = `<tr><td class="font-medium text-slate-700">Eksekusi Bersih</td>`;
+            let neSum = 0;
+            months.forEach(m => {
+                let net = data[m].win - data[m].loss; neSum += net;
+                let color = net >= 0 ? 'text-emerald-600' : 'text-rose-600';
+                neRow += `<td class="${color}">${net>0?'+':''}${net}</td>`;
+            });
+            let totalNetColor = neSum >= 0 ? 'text-emerald-600' : 'text-rose-600';
+            neRow += `<td class="font-bold bg-slate-50 ${totalNetColor}">${neSum>0?'+':''}${neSum}</td></tr>`;
+            html += neRow;
+
+            let ddRow = `<tr><td class="font-medium text-slate-700">Max Drawdown (%)</td>`;
+            months.forEach(m => {
+                let val = data[m].maxDD;
+                ddRow += `<td class="text-rose-600">-${val.toFixed(2)}%</td>`;
+            });
+            ddRow += `<td class="font-bold bg-slate-50 text-rose-600">-${currentAnalyticsData.maxDrawdownPerc}</td></tr>`;
+            html += ddRow;
+
+            let conWinRow = `<tr><td class="font-medium text-slate-700">Consic. Profit</td>`;
+            months.forEach(m => {
+                conWinRow += `<td class="text-emerald-600 font-bold">${data[m].maxConWin}</td>`;
+            });
+            conWinRow += `<td class="font-bold bg-slate-50 text-emerald-600">${currentAnalyticsData.conWin}</td></tr>`;
+            html += conWinRow;
+
+            let conLossRow = `<tr><td class="font-medium text-slate-700">Consic. Loss</td>`;
+            months.forEach(m => {
+                conLossRow += `<td class="text-rose-600 font-bold">${data[m].maxConLoss}</td>`;
+            });
+            conLossRow += `<td class="font-bold bg-slate-50 text-rose-600">${currentAnalyticsData.conLoss}</td></tr>`;
+            html += conLossRow;
+            
+            monthlyTbody.innerHTML = html;
+        }
+
+        function renderGrowthChart(sorted, initial) {
+            const ctx = document.getElementById('growthChartCanvas').getContext('2d');
+            if(growthChartInstance) growthChartInstance.destroy();
+            const labels = ["Start"]; const data = [0]; let acc = 0; let lastM = null; const boundaries = [];
+            sorted.forEach((t, i) => {
+                const pl = t.status==='win' ? parseFloat(t.potentialProfit) : -parseFloat(t.riskUsd);
+                const pct = (pl / (parseFloat(t.modal)||initial)) * 100;
+                acc += pct;
+                const m = t.closeTime.slice(0,7);
+                if(lastM && m !== lastM) boundaries.push({i:i+1, lbl: new Date(t.closeTime).toLocaleString('id',{month:'short'})});
+                lastM = m;
+                labels.push(t.closeTime.slice(5,10)); data.push(acc);
+            });
+            growthChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Growth %', data, borderColor:'#0f172a', borderWidth:2, pointRadius:0, fill:true, backgroundColor:'rgba(15,23,42,0.05)', tension:0.2 }] },
+                options: { responsive:true, maintainAspectRatio:false, scales:{x:{display:false}, y:{grid:{borderDash:[4,4]}}}, plugins:{legend:{display:false}} },
+                plugins: [{
+                    id: 'vLine',
+                    afterDatasetsDraw(chart){
+                        const {ctx, chartArea:{top,bottom}, scales:{x}} = chart;
+                        if(!boundaries.length) return;
+                        ctx.save(); ctx.textAlign='center'; ctx.fillStyle='#94a3b8'; ctx.font='bold 10px sans-serif';
+                        boundaries.forEach(b => {
+                            const xPos = x.getPixelForValue(b.i);
+                            ctx.beginPath(); ctx.moveTo(xPos,top); ctx.lineTo(xPos,bottom);
+                            ctx.strokeStyle='#cbd5e1'; ctx.setLineDash([5,5]); ctx.stroke();
+                            ctx.fillText(b.lbl, xPos, top+15);
+                        });
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        function exportToExcel() {
+            if (tradeHistory.length === 0) return showErrorModal("Belum ada data untuk diekspor");
+
+            const sortedHistory = [...tradeHistory].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            const masterData = sortedHistory.map((t, index) => ({
+                "No": index + 1,
+                "Modal ($)": parseFloat(t.modal),
+                "Risiko (%)": t.riskPercent,
+                "Aset (Pair)": t.pair,
+                "Posisi": t.type.toUpperCase(),
+                "Harga Entry": parseFloat(t.entry),
+                "Stop Loss": parseFloat(t.sl),
+                "Take profit": parseFloat(t.tp),
+                "Risiko ($)": parseFloat(t.riskUsd),
+                "TP (1:2) ($)": parseFloat(t.potentialProfit),
+                "Lot Size": parseFloat(t.lotSize),
+                "SL Pips": parseFloat(t.slPips), 
+                "TP Pips": parseFloat(t.tpPips), 
+                "RR": "1:2",
+                "Status": t.status.toUpperCase(),
+                "Waktu Open": t.timestamp.replace('T',' '), "Waktu Close": t.closeTime.replace('T',' ')
+            }));
+            
+            const stats = [
+                [""], ["STATISTIK PERFORMA LENGKAP"],
+                ["Saldo Akhir", "$" + currentAnalyticsData.finalBalance.toLocaleString('en-US', {minimumFractionDigits: 2})],
+                ["Total Trades", currentAnalyticsData.totalTrades], ["Win Rate", currentAnalyticsData.winrate],
+                ["Max Drawdown", currentAnalyticsData.maxDrawdownPerc], ["Avg Daily %", currentAnalyticsData.avgDaily.toFixed(2) + "%"],
+                ["Avg Monthly %", currentAnalyticsData.avgMonthly.toFixed(2) + "%"], ["Avg Yearly %", currentAnalyticsData.avgYearly.toFixed(2) + "%"],
+                ["Avg Holding", currentAnalyticsData.avgHoldingHours + " Hours"], ["Max Pips", "+" + currentAnalyticsData.maxPipsVal],
+                ["Min Pips", currentAnalyticsData.minPipsVal], ["Max Profit", "+$" + currentAnalyticsData.maxUsdVal.toFixed(2)],
+                ["Max Loss", "-$" + Math.abs(currentAnalyticsData.minUsdVal).toFixed(2)],
+                ["Consic. Profit", currentAnalyticsData.conWin], ["Consic. Loss", currentAnalyticsData.conLoss]
+            ];
+
+            const ws = XLSX.utils.json_to_sheet(masterData);
+            XLSX.utils.sheet_add_aoa(ws, stats, {origin: -1}); 
+            
+            if(currentMonthlyData) {
+                const mKeys = Object.keys(currentMonthlyData);
+                const mRows = [[""], ["TABEL PERKEMBANGAN BULANAN"]];
+                let headerRow = ["Metric"];
+                mKeys.forEach(k => headerRow.push(k));
+                headerRow.push("Total");
+                mRows.push(headerRow);
+                
+                let rowPips = ["Pips"]; let totPips=0;
+                mKeys.forEach(k => { rowPips.push(currentMonthlyData[k].pips.toFixed(0)); totPips+=currentMonthlyData[k].pips; });
+                rowPips.push(totPips.toFixed(0)); mRows.push(rowPips);
+                
+                let rowWL = ["Profit / Loss"]; let totW=0, totL=0;
+                mKeys.forEach(k => { rowWL.push(`${currentMonthlyData[k].win} / ${currentMonthlyData[k].loss}`); totW+=currentMonthlyData[k].win; totL+=currentMonthlyData[k].loss; });
+                rowWL.push(`${totW} / ${totL}`); mRows.push(rowWL);
+                
+                let rowNet = ["Total Win Bersih ($)"]; let totNet=0;
+                mKeys.forEach(k => { rowNet.push(currentMonthlyData[k].usd.toFixed(2)); totNet+=currentMonthlyData[k].usd; });
+                rowNet.push(totNet.toFixed(2)); mRows.push(rowNet);
+
+                let rowNetExec = ["Eksekusi Bersih"]; let totNetExec=0;
+                mKeys.forEach(k => { 
+                    let net = currentMonthlyData[k].win - currentMonthlyData[k].loss;
+                    totNetExec += net;
+                    rowNetExec.push(net > 0 ? `+${net}` : net);
+                });
+                rowNetExec.push(totNetExec > 0 ? `+${totNetExec}` : totNetExec);
+                mRows.push(rowNetExec);
+                
+                let rowDD = ["Max Drawdown (%)"];
+                mKeys.forEach(k => {
+                    rowDD.push(`-${currentMonthlyData[k].maxDD.toFixed(2)}%`);
+                });
+                rowDD.push(`-${currentAnalyticsData.maxDrawdownPerc}`);
+                mRows.push(rowDD);
+                
+                XLSX.utils.sheet_add_aoa(ws, mRows, {origin:-1});
+            }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan Lengkap");
+            XLSX.writeFile(wb, "TradeLog_LEODRA_Full.xlsx");
+        }
+
+        function exportToPDF() {
+            if (tradeHistory.length === 0) return showErrorModal("Belum ada data untuk diekspor");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            doc.setFontSize(16); doc.text("Laporan Trading Lengkap - LEODRA", 14, 15);
+            doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString('id-ID')}`, 14, 21);
+            
+            // PASTIKAN SEMUA DATA TERMASUK YANG BARU SAJA DITAMBAHKAN
+            const sorted = [...tradeHistory].sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+            
+            const body = sorted.map((t,i) => [
+                i+1, parseFloat(t.modal), t.riskPercent, t.pair, t.type.toUpperCase(), 
+                parseFloat(t.entry).toFixed(2), parseFloat(t.sl).toFixed(2), parseFloat(t.tp).toFixed(2),
+                t.timestamp.slice(0,16).replace('T',' '), t.closeTime.slice(0,16).replace('T',' '),
+                t.lotSize, 
+                '-' + parseFloat(t.slPips).toFixed(0), 
+                '+' + parseFloat(t.tpPips).toFixed(0), 
+                '-'+parseFloat(t.riskUsd).toFixed(2), 
+                parseFloat(t.potentialProfit).toFixed(2), t.status==='win'?'PROFIT':(t.status==='loss'?'LOSS':'PENDING')
+            ]);
+            
+            doc.autoTable({
+                startY: 25,
+                head: [['No','Modal','Risk%','Pair','Pos','Entry','SL','TP','Open','Close','Lot','SL PIPS', 'TP PIPS', 'Risk $','TP $','Status']],
+                body: body, theme:'striped', headStyles:{fillColor:[15,23,42]}, styles:{fontSize:7, cellPadding:1.5}, margin:{top:25}
+            });
+
+            let finalY = doc.lastAutoTable.finalY + 10;
+            if(finalY > 150) { doc.addPage(); finalY = 20; }
+
+            doc.setFontSize(12); doc.text("Statistik Performa Lengkap", 14, finalY);
+            
+            const statsBody = [
+                ["Saldo Akhir", `$${currentAnalyticsData.finalBalance.toLocaleString('en-US', {minimumFractionDigits:2})}`, "Rata2 Harian", `${currentAnalyticsData.avgDaily.toFixed(2)}%`],
+                ["Total Trades", `${currentAnalyticsData.totalTrades}`, "Rata2 Bulanan", `${currentAnalyticsData.avgMonthly.toFixed(2)}%`],
+                ["Win Rate", `${currentAnalyticsData.winrate}`, "Rata2 Tahunan", `${currentAnalyticsData.avgYearly.toFixed(2)}%`],
+                ["Max Drawdown", `${currentAnalyticsData.maxDrawdownPerc}`, "Avg Holding", `${currentAnalyticsData.avgHoldingHours} Jam`],
+                ["Max Profit", `+$${currentAnalyticsData.maxUsdVal.toFixed(2)}`, "Max Pips", `+${currentAnalyticsData.maxPipsVal.toFixed(0)}`],
+                ["Max Loss", `-$${Math.abs(currentAnalyticsData.minUsdVal).toFixed(2)}`, "Min Pips", `${currentAnalyticsData.minPipsVal.toFixed(0)}`],
+                ["Consic. Profit", `${currentAnalyticsData.conWin}`, "Consic. Loss", `${currentAnalyticsData.conLoss}`]
+            ];
+            doc.autoTable({ startY: finalY + 5, body: statsBody, theme:'grid', styles:{fontSize:10, cellPadding:3}, columnStyles:{0:{fontStyle:'bold'},2:{fontStyle:'bold'}}, headStyles:{fillColor:[255,255,255], textColor:[0,0,0]} });
+
+            finalY = doc.lastAutoTable.finalY + 10;
+            if(finalY > 150) { doc.addPage(); finalY = 20; }
+            doc.setFontSize(12); doc.text("Tabel Perkembangan Bulanan", 14, finalY);
+            
+            if(currentMonthlyData) {
+                const mKeys = Object.keys(currentMonthlyData);
+                let mHead = ['Metric', ...mKeys, 'Total'];
+                let mBody = [];
+                
+                let rPct = ['Persentase (%)']; let tPct=0; mKeys.forEach(k=>{rPct.push(currentMonthlyData[k].pct.toFixed(2)+'%'); tPct+=currentMonthlyData[k].pct;}); rPct.push(tPct.toFixed(2)+'%'); mBody.push(rPct);
+                let rP = ['Pips']; let tP=0; mKeys.forEach(k=>{rP.push(currentMonthlyData[k].pips.toFixed(0)); tP+=currentMonthlyData[k].pips;}); rP.push(tP.toFixed(0)); mBody.push(rP);
+                let rCount = ['Total Eksekusi']; let tCount=0; mKeys.forEach(k=>{rCount.push(currentMonthlyData[k].count); tCount+=currentMonthlyData[k].count;}); rCount.push(tCount); mBody.push(rCount);
+                let rWL = ['Profit / Loss']; let tW=0, tL=0; mKeys.forEach(k=>{rWL.push(`${currentMonthlyData[k].win}/${currentMonthlyData[k].loss}`); tW+=currentMonthlyData[k].win; tL+=currentMonthlyData[k].loss;}); rWL.push(`${tW}/${tL}`); mBody.push(rWL);
+                let rN = ['Total Win Bersih ($)']; let tN=0; mKeys.forEach(k=>{rN.push(currentMonthlyData[k].usd.toFixed(2)); tN+=currentMonthlyData[k].usd;}); rN.push(tN.toFixed(2)); mBody.push(rN);
+                let rNE = ['Eksekusi Bersih']; let tNE=0; mKeys.forEach(k => { let net = currentMonthlyData[k].win - currentMonthlyData[k].loss; tNE += net; rNE.push(net > 0 ? `+${net}` : net); }); rNE.push(tNE > 0 ? `+${tNE}` : tNE); mBody.push(rNE);
+                
+                let rDD = ['Max Drawdown (%)'];
+                mKeys.forEach(k => {
+                    rDD.push(`-${currentMonthlyData[k].maxDD.toFixed(2)}%`);
+                });
+                rDD.push(`-${currentAnalyticsData.maxDrawdownPerc}`);
+                mBody.push(rDD);
+
+                let rCW = ['Consic. Profit'];
+                mKeys.forEach(k => rCW.push(currentMonthlyData[k].maxConWin));
+                rCW.push(currentAnalyticsData.conWin);
+                mBody.push(rCW);
+
+                let rCL = ['Consic. Loss'];
+                mKeys.forEach(k => rCL.push(currentMonthlyData[k].maxConLoss));
+                rCL.push(currentAnalyticsData.conLoss);
+                mBody.push(rCL);
+
+                doc.autoTable({ startY: finalY + 5, head:[mHead], body: mBody, theme:'grid', headStyles:{fillColor:[100,116,139]}, styles:{fontSize:8} });
+            }
+
+            finalY = doc.lastAutoTable.finalY + 15;
+            if(finalY + 80 > 190) { doc.addPage(); finalY = 20; }
+            doc.setFontSize(12); doc.text("Grafik Perkembangan Modal", 14, finalY);
+            const cvs = document.getElementById('growthChartCanvas');
+            if(cvs) {
+                const tC = document.createElement('canvas'); tC.width=cvs.width; tC.height=cvs.height;
+                const tX = tC.getContext('2d'); tX.fillStyle='#fff'; tX.fillRect(0,0,tC.width,tC.height); tX.drawImage(cvs,0,0);
+                doc.addImage(tC.toDataURL('image/png'), 'PNG', 14, finalY+5, 180, 80);
+            }
+            doc.save("Laporan_Trading_LEODRA_Full.pdf");
+        }
+
+        function renderHistory() {
+            historyList.innerHTML = '';
+            // PERBAIKAN: Langsung menyisipkan HTML jika kosong, daripada memanipulasi style elemen yang dihapus
+            if(tradeHistory.length===0) { 
+                historyList.innerHTML = '<div id="history-empty-state" class="flex flex-col items-center justify-center h-full text-slate-300"><span class="text-xs font-medium">Belum ada data</span></div>';
+                return; 
+            }
+            
+            const sorted = [...tradeHistory].sort((a, b) => {
+                const scoreA = a.status === 'pending' ? 0 : 1;
+                const scoreB = b.status === 'pending' ? 0 : 1;
+                if (scoreA !== scoreB) return scoreA - scoreB;
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+
+            sorted.forEach((t, index) => {
+                const num = index + 1; 
+                const div = document.createElement('div');
+                div.className = 'bg-white border border-slate-100 p-3 rounded-xl flex justify-between items-center shadow-sm mb-2';
+                const prof = parseFloat(t.potentialProfit).toFixed(2);
+                const rsk = parseFloat(t.riskUsd).toFixed(2);
+                const isW = t.status === 'win';
+                const plVal = isW ? `+$${prof}` : (t.status==='loss' ? `-$${rsk}` : '$0.00');
+                const plCol = isW ? 'text-emerald-600' : (t.status==='loss' ? 'text-rose-600' : 'text-slate-500');
+                const label = isW ? 'PROFIT' : (t.status==='loss' ? 'LOSS' : 'PENDING'); 
+                
+                const buttons = `<div class="flex gap-1 mt-1"><button onclick="setStatus('${t.id}','win')" class="text-[10px] bg-emerald-50 text-emerald-600 px-2 rounded font-bold">P</button><button onclick="setStatus('${t.id}','loss')" class="text-[10px] bg-rose-50 text-rose-600 px-2 rounded font-bold">L</button></div>`;
+                const labelSpan = `<span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">${label}</span>`;
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-300">#${num}</span>
+                        <div>
+                            <div class="font-bold text-slate-700 text-sm">${t.pair} <span class="text-xs text-slate-400">(${t.type})</span></div>
+                            <div class="text-xxs text-slate-400">${t.timestamp.replace('T',' ')}</div>
+                        </div>
+                    </div>
+                    <div class="text-right flex flex-col items-end">
+                        <button onclick="deleteTrade('${t.id}')" class="mb-1 text-slate-300 hover:text-rose-500 transition" title="Hapus Trade Ini">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        <div class="font-bold ${plCol} text-lg">${plVal}</div>
+                        ${t.status==='pending' ? buttons : labelSpan}
+                    </div>`;
+                historyList.appendChild(div);
+            });
+            updateAnalytics();
+        }
+
+        // LocalStorage
+        function saveTradeHistory() { localStorage.setItem('tradeCal_history_v5', JSON.stringify(tradeHistory)); }
+        function loadTradeHistory() { const d = localStorage.getItem('tradeCal_history_v5'); if(d) tradeHistory = JSON.parse(d); renderHistory(); }
+        function saveFormInputs() { localStorage.setItem('tradeCal_form_v5', JSON.stringify({modal:modalInput.value, pair:pairInput.value, type:orderTypeInput.value, entry:entryPriceInput.value, sl:slPriceInput.value})); }
+        function loadFormInputs() { const d = JSON.parse(localStorage.getItem('tradeCal_form_v5')); if(d) { modalInput.value=d.modal; pairInput.value=d.pair; orderTypeInput.value=d.type; entryPriceInput.value=d.entry; slPriceInput.value=d.sl; } }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            modalInput=document.getElementById('modal'); pairInput=document.getElementById('pair'); orderTypeInput=document.getElementById('order-type');
+            entryPriceInput=document.getElementById('entry-price'); slPriceInput=document.getElementById('sl-price'); openTimeInput=document.getElementById('open-time');
+            closeTimeInput=document.getElementById('close-time'); riskUsdOutput=document.getElementById('result-risk-usd'); lotSizeOutput=document.getElementById('result-lot-size');
+            slPipsOutput=document.getElementById('result-sl-pips'); tpPipsOutput=document.getElementById('result-tp-pips'); tpPriceOutput=document.getElementById('result-tp-price'); statusElement=document.getElementById('calculation-status');
+            saveBtn=document.getElementById('btn-save'); resetBtn=document.getElementById('btn-reset'); historyList=document.getElementById('history-list');
+            statMaxUsd=document.getElementById('stat-max-usd');
+            statMinUsd=document.getElementById('stat-min-usd'); slWarningModal=document.getElementById('sl-warning-modal'); deleteAllModal=document.getElementById('delete-all-modal');
+            errorModal=document.getElementById('error-modal'); errorMessage=document.getElementById('error-modal-message'); btnDownloadExcel=document.getElementById('btn-download-excel');
+            btnDownloadPdf=document.getElementById('btn-download-pdf'); importExcelInput=document.getElementById('import-excel'); monthlyThead=document.getElementById('monthly-thead');
+            monthlyTbody=document.getElementById('monthly-tbody'); hamburgerButton=document.getElementById('hamburger-button'); mobileMenu=document.getElementById('mobile-menu'); mobileMenuCloseBtn=document.getElementById('mobile-menu-close-btn');
+            
+            statConWin=document.getElementById('stat-con-win'); statConLoss=document.getElementById('stat-con-loss');
+            statConWinUsd=document.getElementById('stat-con-win-usd'); statConWinPips=document.getElementById('stat-con-win-pips');
+            statConLossUsd=document.getElementById('stat-con-loss-usd'); statConLossPips=document.getElementById('stat-con-loss-pips');
+            statLossProb=document.getElementById('stat-loss-prob'); statTotalLossNominal=document.getElementById('stat-total-loss-nominal');
+            statFinalBalance=document.getElementById('stat-final-balance'); statWinrate=document.getElementById('stat-winrate');
+            statDrawdownPerc=document.getElementById('stat-drawdown-perc'); statDailyPerc=document.getElementById('stat-daily-perc');
+            statMonthlyPerc=document.getElementById('stat-monthly-perc'); statYearlyPerc=document.getElementById('stat-yearly-perc');
+            statHoldingPeriod=document.getElementById('stat-holding-period'); statMaxPips=document.getElementById('stat-max-pips');
+            statMinPips=document.getElementById('stat-min-pips');
+
+            setupFileUploads(); setDefaultDates(); loadFormInputs(); loadTradeHistory(); handleCalculation();
+
+            [modalInput, pairInput, orderTypeInput, entryPriceInput, slPriceInput].forEach(el => el.addEventListener('input', handleCalculation));
+            resetBtn.onclick = () => { pairInput.value='XAUUSD'; orderTypeInput.value='buy'; entryPriceInput.value=''; slPriceInput.value=''; setDefaultDates(); handleCalculation(); };
+            saveBtn.onclick = handleSaveTrade;
+            document.getElementById('btn-delete-all').onclick = () => deleteAllModal.classList.remove('hidden');
+            document.getElementById('delete-all-cancel').onclick = () => deleteAllModal.classList.add('hidden');
+            document.getElementById('delete-all-confirm').onclick = () => { tradeHistory=[]; saveTradeHistory(); renderHistory(); deleteAllModal.classList.add('hidden'); };
+            document.getElementById('sl-modal-ok').onclick = () => slWarningModal.classList.add('hidden');
+            document.getElementById('sl-modal-apply').onclick = () => { if (currentCalcData?.suggestedSl) { slPriceInput.value = currentCalcData.suggestedSl.toFixed(currentCalcData.decimals); slWarningModal.classList.add('hidden'); handleCalculation(); } };
+            document.getElementById('error-modal-close').onclick = () => errorModal.classList.add('hidden');
+            btnDownloadExcel.onclick = exportToExcel;
+            btnDownloadPdf.onclick = exportToPDF;
+            importExcelInput.onchange = function(e) {
+                const f = e.target.files[0]; if(!f)return;
+                const r = new FileReader();
+                r.onload = evt => {
+                    try {
+                        const wb = XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
+                        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+
+                        const validRows = rows.filter(r => r["No"] !== undefined && r["Status"] !== undefined && r["Modal ($)"] !== undefined);
+
+                        const restoredData = validRows.map(r => {
+                            const rawStatus = (r["Status"] || '').toString().toUpperCase().trim();
+                            let finalStatus = 'pending';
+                            if (rawStatus === 'PROFIT' || rawStatus === 'WIN') finalStatus = 'win';
+                            else if (rawStatus === 'LOSS' || rawStatus === 'LOSE') finalStatus = 'loss';
+                            
+                            return {
+                                id: generateUUID(),
+                                timestamp: safeDateISO(r["Waktu Open"]),
+                                closeTime: safeDateISO(r["Waktu Close"]),
+                                modal: parseSafeFloat(r["Modal ($)"]),
+                                riskPercent: parseSafeFloat(r["Risiko (%)"]),
+                                pair: r["Aset (Pair)"] || 'XAUUSD',
+                                type: (r["Posisi"] || 'BUY').toLowerCase(),
+                                entry: parseSafeFloat(r["Harga Entry"]),
+                                sl: parseSafeFloat(r["Stop Loss"]),
+                                tp: parseSafeFloat(r["Take profit"]),
+                                lotSize: parseSafeFloat(r["Lot Size"]),
+                                riskUsd: parseSafeFloat(r["Risiko ($)"]),
+                                potentialProfit: parseSafeFloat(r["TP (1:2) ($)"]),
+                                slPips: parseSafeFloat(r["SL Pips"]),
+                                tpPips: parseSafeFloat(r["TP Pips"] || ((r["Jarak (Pips)"]||0)*2)),
+                                status: finalStatus
+                            };
+                        });
+                        
+                        tradeHistory = restoredData.filter(t => t.status === 'win' || t.status === 'loss');
+
+                        saveTradeHistory(); renderHistory(); 
+                        
+                        statusElement.textContent = `Berhasil memulihkan ${tradeHistory.length} data trade selesai.`;
+                        statusElement.classList.add("text-emerald-600");
+                        setTimeout(() => {
+                            statusElement.textContent = "Siap menghitung...";
+                            statusElement.classList.remove("text-emerald-600");
+                        }, 3000);
+                    } catch (err) {
+                        showErrorModal("Gagal membaca file Excel. Pastikan format benar.");
+                        console.error(err);
+                    }
+                };
+                r.readAsArrayBuffer(f);
+            };
+            if(hamburgerButton) hamburgerButton.onclick = () => { mobileMenu.classList.toggle('hidden'); document.body.classList.toggle('overflow-hidden'); };
+            if(mobileMenuCloseBtn) mobileMenuCloseBtn.onclick = () => { mobileMenu.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
+        });
+    </script>
+</body>
+</html>
